@@ -10,59 +10,48 @@ import RealmSwift
 
 class DownloadsManager {
     
-    private var realm: Realm!
-    
-    //private var downloads: Results<SongDownload>!
-    
-    var queue = DispatchQueue(label: "realm")
+    private let realmQueue = DispatchQueue(label: "com.MusicPlayer.realmQueue", qos: .userInteractive, attributes: .concurrent)
     
     private var downloads: Results<SongDownload> {
-        
+        return try! Realm().objects(SongDownload.self).sorted(byKeyPath: "creationDate", ascending: false)
     }
     
     var downloadsCount: Int {
         return try! Realm().objects(SongDownload.self).count
     }
     
-    init() {
-        queue = DispatchQueue(label: "realm")
-        queue.async {
-            Realm.asyncOpen(configuration: Realm.Configuration.defaultConfiguration) { realm, error in
-                if let realm = realm {
-                    self.realm = realm
-                    self.downloads = self.realm.objects(SongDownload.self).sorted(byKeyPath: "creationDate")
-                    // Realm successfully opened, with migration applied on background thread
-                } else if let error = error {
-                    // Handle error that occurred while opening the Realm
+    func addDownload(_ download: SongDownload, completion: @escaping () -> ()) {
+        realmQueue.async {
+            autoreleasepool {
+                let realm = try! Realm()
+                try! realm.write {
+                    realm.add(download)
+                }
+                realm.refresh()
+                DispatchQueue.main.async {
+                    completion()
                 }
             }
-            //self.realm = try! Realm()
-//            self.downloads = self.realm.objects(SongDownload.self).sorted(byKeyPath: "creationDate")
         }
     }
     
-    func addDownload(_ download: SongDownload) {
-        queue.async {
-            autoreleasepool {
-            try! self.realm.write {
-                self.realm.add(download)
+    func removeDownload(_ download: SongDownload, completion: @escaping () -> ()) {
+        let downloadRef = ThreadSafeReference(to: download)
+        realmQueue.async {
+            let realm = try! Realm()
+            guard let download = realm.resolve(downloadRef) else {
+                return
             }
-            self.realm.refresh()
+            try! realm.write {
+                realm.delete(download)
             }
-        }
-    }
-    
-    func removeDownload(_ download: SongDownload) {
-        queue.async {
-            try! self.realm.write {
-                self.realm.delete(download)
-            }
-            self.realm.refresh()
+            realm.refresh()
+            completion()
         }
     }
     
     func download(for index: Int, completion: @escaping (SongDownload) -> ()) {
-        queue.async {
+        realmQueue.async {
             let download = self.downloads[index]
             let downloadRef = ThreadSafeReference(to: download)
             DispatchQueue.main.async {
@@ -76,7 +65,7 @@ class DownloadsManager {
     }
     
     func download(with url: URL, completion: @escaping (SongDownload?) -> ()) {
-        queue.async {
+        realmQueue.async {
             guard let download = self.download(with: url) else {
                 DispatchQueue.main.async {
                     completion(nil)
@@ -95,7 +84,7 @@ class DownloadsManager {
     }
     
     func indexForDownload(with url: URL, completion: @escaping (Int?) -> ()) {
-        queue.async {
+        realmQueue.async {
             let index = self.downloads.index {
                 $0.url == url
             }
@@ -106,26 +95,20 @@ class DownloadsManager {
     }
     
     func setupStatus(_ status: DownloadStatus, forDownloadWith url: URL) {
-        queue.async {
+        realmQueue.async {
             guard let download = self.download(with: url) else {
                 return
             }
-            //try! self.realm.write {
-                download.status = status
-            //}
-            self.realm.refresh()
+            download.status = status
         }
     }
     
     func setupProgress(_ progress: Progress, forDownloadWith url: URL) {
-        queue.async {
+        realmQueue.async {
             guard let download = self.download(with: url) else {
                 return
             }
-            //try! self.realm.write {
-                download.progress = progress
-            //}
-            self.realm.refresh()
+            download.progress = progress
         }
     }
     

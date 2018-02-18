@@ -12,6 +12,8 @@ final class DownloadsVC: UIViewController {
     
     var downloadsManager: DownloadsManager!
     
+    var browserVC: BrowserVC!
+    
     private let downloadService = DownloadService.shared
     
     private let titleLabel: UILabel = {
@@ -68,7 +70,9 @@ final class DownloadsVC: UIViewController {
         downloadsView.dataSource = self
         downloadsView.register(SongDownloadCell.self, forCellWithReuseIdentifier: SongDownloadCell.reuseId)
         
+        //downloadService.delegate.remove(browserVC)
         downloadService.delegate.add(self)
+        //downloadService.delegate.add(browserVC)
         
         closeButton.addTarget(self, action: #selector(tapCloseButton), for: .touchUpInside)
         clearButton.addTarget(self, action: #selector(tapClearButton), for: .touchUpInside)
@@ -108,7 +112,15 @@ extension DownloadsVC: SongDownloadCellDelegate {
     func tapRemoveButton(_ cell: SongDownloadCell) {
         guard let indexPath = downloadsView.indexPath(for: cell) else { return }
         downloadsManager.download(for: indexPath.item) { download in
-            self.downloadService.cancelDownload(with: download.url)
+            if download.status == .downloaded {
+                self.downloadsManager.removeDownload(download) {
+                    DispatchQueue.main.async {
+                        self.downloadsView.deleteItems(at: [indexPath])
+                    }
+                }
+            } else {
+                self.downloadService.cancelDownload(with: download.url)
+            }
         }
     }
     
@@ -126,8 +138,11 @@ extension DownloadsVC: DownloadServiceDelegate {
     func downloadServiceFinishedDownloading(to location: URL, with title: String, url: URL) {
         //guard let download = download else { return }
         //self.downloadsManager.setupStatus(.downloaded, forDownloadWith: url)
+        print("*******WILL reloadItems")
         self.downloadsManager.indexForDownload(with: url) { index in
+            print("WILL reloadItems")
             if let index = index {
+                print("WILL reloadItems")
                 self.downloadsView.reloadItems(at: [IndexPath(item: index, section: 0)])
             }
         }
@@ -143,6 +158,7 @@ extension DownloadsVC: DownloadServiceDelegate {
     }
     
     func downloadServiceDownloadedData(from url: URL, with byteCount: Int64, of totalByteCount: Int64) {
+        print("########downloadServiceDownloadedData")
         downloadsManager.download(with: url) { download in
             guard let download = download else { return }
             self.downloadsManager.indexForDownload(with: url) { index in
@@ -159,10 +175,13 @@ extension DownloadsVC: DownloadServiceDelegate {
     func downloadServiceCanceledDownloading(with url: URL) {
         downloadsManager.download(with: url) { download in
             guard let download = download else { return }
-            self.downloadsManager.removeDownload(download)
             self.downloadsManager.indexForDownload(with: url) { index in
                 if let index = index {
-                    self.downloadsView.deleteItems(at: [IndexPath(item: index, section: 0)])
+                    self.downloadsManager.removeDownload(download) {
+                        DispatchQueue.main.async {
+                            self.downloadsView.deleteItems(at: [IndexPath(item: index, section: 0)])
+                        }
+                    }
                 }
             }
         }

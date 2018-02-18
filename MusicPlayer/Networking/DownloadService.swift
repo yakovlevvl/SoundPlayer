@@ -95,9 +95,7 @@ extension DownloadService: URLSessionDownloadDelegate {
         if !fileManager.directoryExists(musicUrl.path) {
             try! fileManager.createDirectory(atPath: musicUrl.path, withIntermediateDirectories: true)
         }
-        var destinationUrl = musicUrl.appendingPathComponent(location.lastPathComponent)   /// location.lastPathComponent will repeat ?
-        
-        //  change path extension from tmp to music format !!!!
+        var destinationUrl = musicUrl.appendingPathComponent(url.lastPathComponent)
         
         var index = 1
         while fileExists(destinationUrl.path) {
@@ -110,9 +108,13 @@ extension DownloadService: URLSessionDownloadDelegate {
         print(location.absoluteString)
         do {
             try fileManager.moveItem(at: location, to: destinationUrl)
-            delegate.invoke {
-                $0.downloadServiceFinishedDownloading(to: destinationUrl, with: url, title: title)
+            DispatchQueue.main.async {
+                self.delegate.invoke {
+                    print("%%%%%%invoke delegate: \($0)")
+                    $0.downloadServiceFinishedDownloading(to: destinationUrl, with: url, title: title)
+                }
             }
+            
             print("finishedDownloading")
             print("savedToUrl *** \(destinationUrl) ***")
         } catch let error as NSError {

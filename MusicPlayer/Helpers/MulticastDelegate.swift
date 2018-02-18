@@ -29,7 +29,9 @@ class MulticastDelegate<T> {
 	}
 	
 	func invoke(_ invocation: (T) -> ()) {
+        print("MulticastDelegates - \(delegates.count)")
 		for delegate in delegates.allObjects {
+            print("!!!!!!!invoke delegate:", delegate)
 			invocation(delegate as! T)
 		}
 	}

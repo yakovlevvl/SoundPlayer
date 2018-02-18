@@ -25,8 +25,12 @@ class Library {
     }
     
     func addSong(_ song: Song) {
-        try! realm.write {
-            realm.add(song)
+        DispatchQueue.global(qos: .userInteractive).async {
+            let realm = try! Realm()
+            try! realm.write {
+                realm.add(song)
+            }
+            realm.refresh()
         }
     }
     

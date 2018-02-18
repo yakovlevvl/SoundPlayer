@@ -25,7 +25,7 @@ final class BrowserVC: UIViewController {
     
     private let downloadService = DownloadService.shared
 
-    private var downloadsManager: DownloadsManager! //= DownloadsManager()
+    private let downloadsManager = DownloadsManager()
     
     private let musicFormats = ["mp3", "aac", "aiff", "wav", "alac"]
     
@@ -78,7 +78,7 @@ final class BrowserVC: UIViewController {
         //let queue = DispatchQueue(label: "realm")
         
         //queue.async {
-            self.downloadsManager = DownloadsManager()
+            //self.downloadsManager = DownloadsManager()
             //self.downloadsManager.queue = queue
         //}
         
@@ -137,7 +137,7 @@ final class BrowserVC: UIViewController {
         alertVC.showClearButton = true
         alertVC.textFieldPlaceholder = "Name"
         alertVC.textFieldText = url.lastPathComponent
-        alertVC.font = UIFont(name: Fonts.general, size: 21)!    // UIFont(name: Fonts.gotham, size: 19)!
+        alertVC.font = UIFont(name: Fonts.general, size: 21)!
         let cancelAction = Action(title: "Cancel", type: .cancel)
         let saveAction = Action(title: "Save", type: .normal) { _ in
             let songName = alertVC.textFieldText!
@@ -149,12 +149,11 @@ final class BrowserVC: UIViewController {
     }
     
     private func downloadSong(with url: URL, with name: String) {
-        let songDownload = SongDownload()
-        songDownload.title = name
-        songDownload.url = url
-        downloadsManager.addDownload(songDownload)
-        downloadService.startDownload(with: url, title: name)
-        print("startDownloadWithUrl *** \(songDownload.url) ***")
+        let download = SongDownload(url: url, title: name)
+        downloadsManager.addDownload(download) {
+            self.downloadService.startDownload(with: url, title: name)
+        }
+        print("startDownloadWithUrl *** \(download.url) ***")
     }
     
     deinit {
@@ -171,11 +170,11 @@ extension BrowserVC: DownloadServiceDelegate {
     }
     
     func downloadServiceFinishedDownloading(to location: URL, with url: URL, title: String) {
+        downloadsManager.setupStatus(.downloaded, forDownloadWith: url)
         let song = Song(url: location)
         song.title = title
         Library.main.addSong(song)
         print("delegate: downloadManagerFinishedDownloading")
-        downloadsManager.setupStatus(.downloaded, forDownloadWith: url)
     }
     
     func downloadServiceDownloadedData(from url: URL, with byteCount: Int64, of totalByteCount: Int64) {
