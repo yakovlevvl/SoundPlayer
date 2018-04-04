@@ -9,16 +9,17 @@
 import RealmSwift
 
 class SongDownload: Object {
-    
+
     @objc private(set) dynamic var title = ""
     @objc private(set) dynamic var creationDate = Date()
+    @objc private(set) dynamic var id = UUID().uuidString
     
     @objc private dynamic var downloadUrl = ""
     @objc private dynamic var totalByteCount: Int64 = 0
     @objc private dynamic var downloadedByteCount: Int64 = 0
     @objc private dynamic var downloadStatus = DownloadStatus.preparing.rawValue
     
-    @objc private dynamic var resumeDataPath: String?
+    @objc private dynamic var resumeDataSubpath: String?
     
     @objc dynamic var song: Song?
     
@@ -27,7 +28,7 @@ class SongDownload: Object {
     }
     
     var totalSize: String {
-        return ByteCountFormatter.string(fromByteCount: totalByteCount, countStyle: .file)
+        return ByteCountFormatter.string(fromByteCount: totalByteCount, countStyle: .file).capitalized
     }
     
     var resumeData: Data? {
@@ -48,13 +49,14 @@ class SongDownload: Object {
             if !fileManager.directoryExists(cacheUrl.path) {
                 try! fileManager.createDirectory(atPath: cacheUrl.path, withIntermediateDirectories: true)
             }
-            let resumeDataUrl = cacheUrl.appendingPathComponent(UUID().uuidString + ".txt")
+            let pathComponent = UUID().uuidString + ".txt"
+            let resumeDataUrl = cacheUrl.appendingPathComponent(pathComponent)
             
             do {
                 try data.write(to: resumeDataUrl)
                 let realm = try Realm()
                 try realm.write {
-                    resumeDataPath = resumeDataUrl.path
+                    resumeDataSubpath = pathComponent
                 }
                 realm.refresh()
             } catch {
@@ -89,8 +91,9 @@ class SongDownload: Object {
                 downloadStatus = newValue.rawValue
             }
             realm?.refresh()
-            /////
-            print(downloadStatus)
+            if newValue == .downloaded {
+                clearResumeData()
+            }
         }
     }
     
@@ -100,13 +103,17 @@ class SongDownload: Object {
         self.downloadUrl = url.absoluteString
     }
     
+    override static func primaryKey() -> String? {
+        return "id"
+    }
+    
     func clearResumeData() {
         guard let path = resumeDataPath else {
             return
         }
         let realm = try? Realm()
         try? realm?.write {
-            resumeDataPath = nil
+            resumeDataSubpath = nil
         }
         realm?.refresh()
         let fileManager = FileManager.default
@@ -115,4 +122,24 @@ class SongDownload: Object {
         }
     }
     
+    private var resumeDataPath: String? {
+        guard let subpath = resumeDataSubpath else {
+            return nil
+        }
+        let fileManager = FileManager.default
+        let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let resumeDataUrl = documentsUrl.appendingPathComponent("DownloadsCache").appendingPathComponent(subpath)
+        return resumeDataUrl.path
+    }
 }
+
+enum DownloadStatus: String {
+    
+    case paused = "Paused"
+    case failed = "Failed"
+    case preparing = "Preparing"
+    case downloaded = "Downloaded"
+    case downloading = "Downloading"
+}
+
+

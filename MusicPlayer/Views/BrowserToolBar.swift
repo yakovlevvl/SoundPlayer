@@ -15,7 +15,7 @@ final class BrowserToolBar: UIView  {
     private let backButton: UIButton = {
         let button = UIButton(type: .custom)
         button.frame.size = CGSize(width: 50, height: 50)
-        button.setImage(UIImage(named: "BackIcon"), for: .normal)
+        button.setImage(UIImage(named: "PreviousIcon"), for: .normal)
         button.contentMode = .center
         return button
     }()
@@ -31,7 +31,8 @@ final class BrowserToolBar: UIView  {
     private let bookmarksButton: UIButton = {
         let button = UIButton(type: .custom)
         button.frame.size = CGSize(width: 50, height: 50)
-        button.setImage(UIImage(named: "BookmarksIcon"), for: .normal)
+        button.setImage(UIImage(named: "BookmarkIcon"), for: .normal)
+        button.tintColor = .black
         button.contentMode = .center
         return button
     }()
@@ -84,8 +85,8 @@ final class BrowserToolBar: UIView  {
         closeButton.center.y = y
         
         let x = (frame.width/6).rounded()
-        backButton.center.x = x - 15
-        forwardButton.center.x = 2*x - 6
+        backButton.center.x = x - ( Screen.is4inch ? 15 : 18 )
+        forwardButton.center.x = 2*x - ( Screen.is4inch ? 6 : 8 )
         bookmarksButton.center.x = 3*x
         downloadsButton.center.x = 4*x + 8
         closeButton.center.x = 5*x + 13

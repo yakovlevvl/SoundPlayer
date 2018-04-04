@@ -29,10 +29,12 @@ class MulticastDelegate<T> {
 	}
 	
 	func invoke(_ invocation: (T) -> ()) {
-        print("MulticastDelegates - \(delegates.count)")
+        //print("MulticastDelegates - \(delegates.count)")
 		for delegate in delegates.allObjects {
-            print("!!!!!!!invoke delegate:", delegate)
-			invocation(delegate as! T)
+            //print("!!!!!!!invoke delegate:", delegate)
+            //DispatchQueue.global(qos: .userInitiated).sync {
+                invocation(delegate as! T)
+            //}
 		}
 	}
 

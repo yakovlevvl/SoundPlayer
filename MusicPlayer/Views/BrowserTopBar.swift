@@ -20,7 +20,7 @@ final class BrowserTopBar: UIView {
         textField.autocapitalizationType = .none
         textField.clearButtonMode = .whileEditing
         textField.returnKeyType = .go
-        textField.font = UIFont(name: Fonts.general, size: 20)
+        textField.font = UIFont(name: Fonts.general, size: Screen.is4inch ? 20 : 21)
         textField.frame.size.height = 46
         textField.borderStyle = .none
         return textField
@@ -43,7 +43,7 @@ final class BrowserTopBar: UIView {
     private let cancelButton: UIButton = {
         let button = UIButton(type: .custom)
         button.frame.size = CGSize(width: 70, height: 50)
-        button.titleLabel!.font = UIFont(name: Fonts.general, size: 19)
+        button.titleLabel!.font = UIFont(name: Fonts.general, size: Screen.is4inch ? 19 : 20)
         button.setTitleColor(.black, for: .normal)
         button.setTitle("Cancel", for: .normal)
         return button
@@ -166,7 +166,9 @@ extension BrowserTopBar {
     
     func hideKeyboard() {
         keyboardIsShown = false
-        searchField.resignFirstResponder()
+        UIView.animate(0.2, options: .curveEaseOut) {
+            self.searchField.resignFirstResponder()
+        }
         UIView.animate(0.35, damping: 0.95, velocity: 0.8) {
             self.cancelButton.transform = CGAffineTransform(scaleX: 0.3, y: 0.3)
             self.cancelButton.alpha = 0

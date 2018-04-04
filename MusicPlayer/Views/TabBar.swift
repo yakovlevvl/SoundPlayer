@@ -14,27 +14,23 @@ final class TabBar: UIView {
     
     private let browserButton: UIButton = {
         let button = UIButton(type: .custom)
-        button.frame.size = CGSize(width: 50, height: 50)
         button.setImage(UIImage(named: "BrowserIcon"), for: .normal)
-        button.contentMode = .center
         return button
     }()
     
     private let libraryButton: UIButton = {
         let button = UIButton(type: .custom)
-        button.frame.size = CGSize(width: 50, height: 50)
         button.setImage(UIImage(named: "LibraryIcon"), for: .normal)
-        button.contentMode = .center
         return button
     }()
     
     private let settingsButton: UIButton = {
         let button = UIButton(type: .custom)
-        button.frame.size = CGSize(width: 50, height: 50)
         button.setImage(UIImage(named: "SettingsIcon"), for: .normal)
-        button.contentMode = .center
         return button
     }()
+    
+    private lazy var buttons = [browserButton, libraryButton, settingsButton]
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -42,24 +38,40 @@ final class TabBar: UIView {
     }
     
     private func setupViews() {
+        backgroundColor = .white
+        
         addSubview(browserButton)
         addSubview(libraryButton)
         addSubview(settingsButton)
         
+        for button in buttons {
+            button.tintColor = .black
+            button.contentMode = .center
+            button.frame.size = CGSize(width: 50, height: 50)
+        }
+        
         browserButton.addTarget(self, action: #selector(tapBrowserButton), for: .touchUpInside)
         libraryButton.addTarget(self, action: #selector(tapLibraryButton), for: .touchUpInside)
         settingsButton.addTarget(self, action: #selector(tapSettingsButton), for: .touchUpInside)
+        
+        highlightButton(libraryButton)
+    }
+    
+    private func layoutViews() {
+        for button in buttons {
+            button.center.y = frame.height/2
+        }
+        
+        let value = frame.width/4
+        
+        browserButton.center.x = value - 24
+        libraryButton.center.x = 2*value
+        settingsButton.center.x = 3*value + 24
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        browserButton.center.y = frame.height/2
-        libraryButton.center.y = frame.height/2
-        settingsButton.center.y = frame.height/2
-        
-        browserButton.center.x = frame.width/4
-        libraryButton.center.x = 2*frame.width/4
-        settingsButton.center.x = 3*frame.width/4
+        layoutViews()
     }
     
     @objc private func tapBrowserButton() {
@@ -76,12 +88,11 @@ final class TabBar: UIView {
         delegate?.tapSettingsButton()
     }
     
-    private func highlightButton(_ button: UIButton) {
-        button.tintColor = UIColor(hex: "D0021B")
-        if button.isEqual(libraryButton) {
-            settingsButton.tintColor = .black
-        } else {
-            libraryButton.tintColor = .black
+    private func highlightButton(_ selectedButton: UIButton) {
+        for button in buttons {
+            UIView.animate(0.18) {
+                button.tintColor = button == selectedButton ? Colors.red : .black
+            }
         }
     }
     

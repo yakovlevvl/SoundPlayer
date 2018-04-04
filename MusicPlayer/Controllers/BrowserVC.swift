@@ -6,8 +6,8 @@
 //  Copyright © 2018 Vladyslav Yakovlev. All rights reserved.
 //
 
-import UIKit
 import WebKit
+import UserNotifications
 
 final class BrowserVC: UIViewController {
     
@@ -16,24 +16,48 @@ final class BrowserVC: UIViewController {
     private let topBar = BrowserTopBar()
     private let toolBar = BrowserToolBar()
     
+    private var historyVC: BrowserHistoryVC?
+    
     private let progressView: ProgressView = {
         let view = ProgressView()
+        view.autoreset = true
         view.frame.size.height = 3
         view.progressColor = UIColor(hex: "0080FF")
         return view
     }()
     
-    private let downloadService = DownloadService.shared
+    private var alertView: AlertView?
+    
+    weak var delegate: BrowserDelegate?
+    
+    weak var downloadDelegate: BrowserDownloadDelegate?
+    
+    private var downloadService: DownloadService!
 
     private let downloadsManager = DownloadsManager()
     
+    private let bookmarksManager = BookmarksManager()
+    
+    private let historyManager = BrowserHistoryManager()
+    
+    private let transitionManager = VerticalTransitionManager()
+    
     private let musicFormats = ["mp3", "aac", "aiff", "wav", "alac"]
     
-    var progressObservation: NSKeyValueObservation?
-    var loadingObservation: NSKeyValueObservation?
     var titleObservation: NSKeyValueObservation?
     var goBackObservation: NSKeyValueObservation?
+    var loadingObservation: NSKeyValueObservation?
+    var progressObservation: NSKeyValueObservation?
     var goForwardObservation: NSKeyValueObservation?
+    
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        downloadService = DownloadService.shared(delegate: self)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -75,16 +99,15 @@ final class BrowserVC: UIViewController {
         
         loadLastUrl()
         
-        //let queue = DispatchQueue(label: "realm")
-        
-        //queue.async {
-            //self.downloadsManager = DownloadsManager()
-            //self.downloadsManager.queue = queue
-        //}
-        
-        downloadService.delegate.add(self)
-        
         NotificationCenter.default.addObserver(self, selector: #selector(saveLastUrl), name: .UIApplicationWillTerminate, object: nil)
+    }
+    
+    private func setupKeyboardObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame), name: .UIKeyboardWillChangeFrame, object: nil)
+    }
+    
+    private func removeKeyboardObserver() {
+        NotificationCenter.default.removeObserver(self, name: .UIKeyboardWillChangeFrame, object: nil)
     }
     
     @objc private func saveLastUrl() {
@@ -95,6 +118,34 @@ final class BrowserVC: UIViewController {
         if let url = UserDefaults.standard.url(forKey: "browserLastUrl") {
             let request = URLRequest(url: url)
             webView.load(request)
+        } else {
+            setupAlertView()
+        }
+    }
+    
+    private func setupAlertView() {
+        alertView = AlertView(frame: webView.bounds)
+        alertView!.text = "Search or enter website name"
+        alertView!.icon = UIImage(named: "BrowserSearchIconBig")!
+        webView.addSubview(alertView!)
+    }
+    
+    private func showAlertView() {
+        if alertView != nil {
+            alertView!.alpha = 1
+        }
+    }
+    
+    private func hideAlertView() {
+        if alertView != nil {
+            alertView!.alpha = 0
+        }
+    }
+    
+    private func removeAlertView() {
+        if alertView != nil {
+            alertView!.removeFromSuperview()
+            alertView = nil
         }
     }
     
@@ -149,55 +200,195 @@ final class BrowserVC: UIViewController {
     }
     
     private func downloadSong(with url: URL, with name: String) {
-        let download = SongDownload(url: url, title: name)
-        downloadsManager.addDownload(download) {
-            self.downloadService.startDownload(with: url, title: name)
+        if downloadService.isDownloadExist(with: url) { return }
+        downloadsManager.addDownload(with: url, title: name) { downloadId in
+            self.downloadService.startDownload(with: url, title: name, id: downloadId)
         }
-        print("startDownloadWithUrl *** \(download.url) ***")
+    }
+    
+    private func removeHistoryVC() {
+        UIView.animate(0.2, animation: {
+            self.historyVC?.view.alpha = 0
+        }, completion: { _ in
+            self.historyVC?.removeFromParent()
+            self.historyVC = nil
+        })
+    }
+    
+    private func setupHistoryVC() {
+        historyVC = BrowserHistoryVC()
+        historyVC!.delegate = self
+        historyVC!.historyManager = historyManager
+        addChildController(historyVC!)
+        historyVC!.view.frame.size.width = view.frame.width
+        historyVC!.view.frame.origin = CGPoint(x: 0, y: topBar.frame.height)
+    }
+    
+    @objc private func keyboardWillChangeFrame(notification: Notification) {
+        let frame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
+        if frame.origin.y >= view.frame.height {
+            showAlertView()
+            removeHistoryVC()
+            removeKeyboardObserver()
+            return
+        }
+        hideAlertView()
+        UIView.performWithoutAnimation {
+            print("~keyboardWillChangeFrame~")
+            if historyVC == nil {
+               setupHistoryVC()
+            }
+            if historyVC != nil {
+                historyVC!.view.frame.size.height = frame.origin.y - topBar.frame.height
+            }
+        }
+    }
+    
+    private func updateHistory(with url: URL?, title: String?) {
+        guard let url = url else { return }
+        var title = title
+        if title == nil || title!.isEmpty {
+            title = url.absoluteString
+        }
+        historyManager.addItem(with: url, title: title!)
+    }
+    
+    private func load(with url: URL) {
+        let request = URLRequest(url: url)
+        webView.load(request)
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+        print("Browser deinit")
     }
     
 }
 
 extension BrowserVC: DownloadServiceDelegate {
     
-    func downloadServiceFailedDownloading(with url: URL) {
-        print("delegate: downloadManagerFailedDownloading")
-        downloadsManager.setupStatus(.failed, forDownloadWith: url)
+    func downloadServiceStartedDownloading(with url: URL, title: String?, id: String?) {
+        downloadsManager.setupStatus(.downloading, forDownloadWith: id!) {
+            self.downloadDelegate?.browserStartedDownload(with: id!)
+        }
     }
     
-    func downloadServiceFinishedDownloading(to location: URL, with url: URL, title: String) {
-        downloadsManager.setupStatus(.downloaded, forDownloadWith: url)
-        let song = Song(url: location)
-        song.title = title
-        Library.main.addSong(song)
-        print("delegate: downloadManagerFinishedDownloading")
+    func downloadServicePreparingToResumeDownloading(with url: URL, title: String?, id: String?) {
+        downloadsManager.setupStatus(.preparing, forDownloadWith: id!) {
+            self.downloadDelegate?.browserResumedDownload(with: id!)
+        }
     }
     
-    func downloadServiceDownloadedData(from url: URL, with byteCount: Int64, of totalByteCount: Int64) {
+    func downloadServiceFailedSavingFileFromDownload(with url: URL, title: String?, id: String?) {
+        downloadsManager.setupStatus(.failed, forDownloadWith: id!) {
+            self.downloadDelegate?.browserFailedDownload(with: id!)
+        }
+    }
+    
+    func downloadServiceFailedDownloading(with url: URL, resumeData: Data?, title: String?, id: String?) {
+        downloadsManager.setupStatus(.failed, forDownloadWith: id!) {
+            self.downloadsManager.setupResumeData(resumeData, forDownloadWith: id!) {
+                self.downloadDelegate?.browserFailedDownload(with: id!)
+            }
+        }
+    }
+    
+    func downloadServicePausedDownloading(with url: URL, resumeData: Data?, title: String?, id: String?) {
+        downloadsManager.setupStatus(.paused, forDownloadWith: id!) {
+            self.downloadsManager.setupResumeData(resumeData, forDownloadWith: id!) {
+                self.downloadDelegate?.browserPausedDownload(with: id!)
+            }
+        }
+    }
+    
+    func downloadServiceFinishedDownloading(with url: URL, to location: URL, title: String?, id: String?) {
+        downloadsManager.setupStatus(.downloaded, forDownloadWith: id!) {
+            Library.main.addSong(with: location, title: title!) {
+                self.delegate?.browserDownloadedSong()
+                self.presentNotificationForDownloadedSong(with: title!, url: location)
+            }
+            self.downloadDelegate?.browserFinishedDownload(with: id!)
+        }
+    }
+    
+    func downloadServiceDownloadedData(from url: URL, with byteCount: Int64, of totalByteCount: Int64, title: String?, id: String?) {
         let progress = Progress(totalByteCount: totalByteCount, downloadedByteCount: byteCount)
-        downloadsManager.setupProgress(progress, forDownloadWith: url)
+        downloadsManager.setupProgress(progress, forDownloadWith: id!)
+        downloadDelegate?.browserUpdatedDownload(with: id!, with: progress)
     }
-    
 }
 
 extension BrowserVC: BrowserToolBarDelegate {
     
     func tapBookmarksButton() {
-        
+        if let url = webView.url {
+            showActionsForBookmarks(currentUrl: url)
+        } else {
+            showBookmarks()
+        }
+    }
+    
+    private func showBookmarks() {
+        let bookmarksVC = BookmarksVC()
+        transitionManager.cornerRadius = 8
+        bookmarksVC.transitioningDelegate = transitionManager
+        bookmarksVC.bookmarksManager = bookmarksManager
+        bookmarksVC.delegate = self
+        present(bookmarksVC, animated: true)
+    }
+    
+    private func showActionsForBookmarks(currentUrl: URL) {
+        let actionSheet = ActionSheet()
+        actionSheet.actionCellHeight = 70
+        actionSheet.cornerRadius = 12
+        actionSheet.corners = [.topLeft, .topRight]
+        actionSheet.font = UIFont(name: Fonts.general, size: 21)!
+        let cancelAction = Action(title: "Cancel", type: .cancel)
+        let addAction = Action(title: "Add to Bookmarks", type: .normal) { _ in
+            self.showAlertViewForSaveBookmark(with: currentUrl)
+        }
+        let showAction = Action(title: "Show Bookmarks", type: .normal) { _ in
+            self.showBookmarks()
+        }
+        actionSheet.addAction(addAction)
+        actionSheet.addAction(showAction)
+        actionSheet.addAction(cancelAction)
+        actionSheet.present()
+    }
+    
+    private func showAlertViewForSaveBookmark(with url: URL) {
+        let alertVC = AlertController(message: "New Bookmark")
+        alertVC.includeTextField = true
+        alertVC.allowEmptyTextField = false
+        alertVC.showClearButton = true
+        alertVC.textFieldPlaceholder = "Name"
+        alertVC.textFieldText = webView.title ?? ""
+        alertVC.font = UIFont(name: Fonts.general, size: 21)!
+        let cancelAction = Action(title: "Cancel", type: .cancel)
+        let saveAction = Action(title: "Save", type: .normal) { _ in
+            let bookmarkName = alertVC.textFieldText!
+            self.addBookmark(with: url, title: bookmarkName)
+        }
+        alertVC.addAction(cancelAction)
+        alertVC.addAction(saveAction)
+        alertVC.present()
+    }
+    
+    private func addBookmark(with url: URL, title: String) {
+        bookmarksManager.addBookmark(with: url, title: title) {}
     }
     
     func tapDownloadsButton() {
         let downloadsVC = DownloadsVC()
+        transitionManager.cornerRadius = 8
+        downloadsVC.transitioningDelegate = transitionManager
         downloadsVC.downloadsManager = downloadsManager
+        downloadDelegate = downloadsVC
         present(downloadsVC, animated: true)
     }
     
     func tapCloseButton() {
-        
+        dismiss(animated: true)
     }
     
     func tapBackButton() {
@@ -207,7 +398,13 @@ extension BrowserVC: BrowserToolBarDelegate {
     func tapForwardButton() {
         webView.goForward()
     }
+}
+
+extension BrowserVC: BookmarksDelegate {
     
+    func didTapBookmark(with url: URL) {
+        load(with: url)
+    }
 }
 
 extension BrowserVC: BrowserTopBarDelegate {
@@ -218,7 +415,9 @@ extension BrowserVC: BrowserTopBarDelegate {
     
     func tapReloadButton() {
         webView.stopLoading()
-        webView.load(URLRequest(url: webView.url!))
+        if let url = webView.url {
+            webView.load(URLRequest(url: url))
+        }
     }
     
     func searchFieldShouldReturn(with text: String) -> Bool {
@@ -255,6 +454,7 @@ extension BrowserVC: BrowserTopBarDelegate {
     }
     
     func searchFieldDidBeginEditing() {
+        setupKeyboardObserver()
         if let url = webView.url?.absoluteString {
             topBar.searchFieldText = url.removingPercentEncoding ?? url
         }
@@ -276,13 +476,15 @@ extension BrowserVC: BrowserTopBarDelegate {
 extension BrowserVC: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        showBars()
+        removeAlertView()
         if topBar.keyboardIsShown {
             topBar.hideKeyboard()
         }
-        showBars()
     }
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        updateHistory(with: webView.url, title: webView.title)
         showBars()
     }
     
@@ -307,7 +509,12 @@ extension BrowserVC: WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
-        let response = navigationResponse.response as! HTTPURLResponse
+        guard let response = navigationResponse.response as? HTTPURLResponse else {
+            return decisionHandler(.allow)
+        }
+        if response.statusCode >= 400 {
+            return decisionHandler(.allow)
+        }
         let cookies = HTTPCookie.cookies(withResponseHeaderFields: response.allHeaderFields as! [String : String], for: response.url!)
         for cookie in cookies {
             HTTPCookieStorage.shared.setCookie(cookie)
@@ -324,12 +531,28 @@ extension BrowserVC: WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        if (error as NSError).code == -999 { return }
         let alertVC = AlertController(message: "Browser cannot open the page because the server cannot be found")
+        alertVC.font = UIFont(name: Fonts.general, size: 21)!
         alertVC.addAction(Action(title: "Okay", type: .cancel))
         alertVC.present()
         print(error.localizedDescription)
     }
     
+    
+}
+
+extension BrowserVC: BrowserHistoryDelegate {
+    
+    func didTapClearButton() {
+        historyManager.clearHistory {
+            self.removeHistoryVC()
+        }
+    }
+    
+    func didSelectHistoryItem(with url: URL) {
+        load(with: url)
+    }
 }
 
 extension BrowserVC: UIScrollViewDelegate {
@@ -367,6 +590,59 @@ extension BrowserVC: UIScrollViewDelegate {
         }
     }
 }
+
+extension BrowserVC {
+    
+    func presentNotificationForDownloadedSong(with title: String, url: URL) {
+        let center = UNUserNotificationCenter.current()
+        center.getNotificationSettings { settings in
+            guard settings.authorizationStatus == .authorized else {
+                return
+            }
+            let content = UNMutableNotificationContent()
+            content.body = "Song \"\(title)\" has  been downloaded"
+            content.sound = UNNotificationSound.default()
+        
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+            
+            let id = UUID().uuidString
+            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+            
+            center.add(request)
+        }
+    }
+}
+
+protocol BrowserDelegate: class {
+
+    func browserDownloadedSong()
+}
+
+protocol BrowserDownloadDelegate: class {
+    
+    func browserFailedDownload(with id: String)
+    
+    func browserPausedDownload(with id: String)
+    
+    func browserStartedDownload(with id: String)
+    
+    func browserResumedDownload(with id: String)
+    
+    func browserFinishedDownload(with id: String)
+    
+    func browserCanceledDownload(with id: String)
+    
+    func browserUpdatedDownload(with id: String, with progress: Progress)
+
+}
+
+extension BrowserDownloadDelegate {
+    
+    func browserCanceledDownload(with id: String) {}
+    
+}
+
+
 
 
 

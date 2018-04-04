@@ -12,43 +12,33 @@ final class DownloadsVC: UIViewController {
     
     var downloadsManager: DownloadsManager!
     
-    var browserVC: BrowserVC!
+    private let downloadService = DownloadService.shared()
     
-    private let downloadService = DownloadService.shared
-    
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Downloads"
-        label.frame.size = CGSize(width: 100, height: 26)
-        label.font = UIFont(name: Fonts.general, size: 20)
-        return label
-    }()
-    
-    private let closeButton: UIButton = {
-        let button = UIButton(type: .custom)
-        button.frame.size = CGSize(width: 50, height: 50)
-        button.setImage(UIImage(named: "CloseIcon"), for: .normal)
-        button.contentMode = .center
-        return button
-    }()
-    
-    private let clearButton: UIButton = {
-        let button = UIButton(type: .custom)
-        button.frame.size = CGSize(width: 50, height: 50)
-        button.setTitle("Clear", for: .normal)
-        button.setTitleColor(UIColor(hex: "D0021B"), for: .normal)
-        return button
+    private let topBar: ClearTopBar = {
+        let topBar = ClearTopBar()
+        topBar.title = "Downloads"
+        topBar.setRightButtonFontSize(19)
+        topBar.setRightButtonTitle("Clear")
+        topBar.setRightButtonTitleColor(Colors.red)
+        topBar.setLeftButtonImage(UIImage(named: "CloseIcon"))
+        return topBar
     }()
     
     private let downloadsView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
-        layout.itemSize = CGSize(width: UIScreen.main.bounds.width - 40, height: 94)
-        layout.sectionInset.top = 20
         layout.sectionInset.bottom = 20
         layout.minimumLineSpacing = 20
+        layout.itemSize = CGSize(width: screenWidth - 40, height: 94)
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.backgroundColor = UIColor(r: 248, g: 248, b: 248)
+        collectionView.backgroundColor = Colors.darkWhite
         return collectionView
+    }()
+    
+    private lazy var alertView: AlertView = {
+        let view = AlertView(frame: downloadsView.bounds)
+        view.text = "Downloaded music will appear here."
+        view.icon = UIImage(named: "MusicIcon")!
+        return view
     }()
 
     override func viewDidLoad() {
@@ -57,54 +47,90 @@ final class DownloadsVC: UIViewController {
     }
 
     private func setupViews() {
-        view.backgroundColor = UIColor(r: 248, g: 248, b: 248)
+        view.backgroundColor = Colors.darkWhite
         
-        view.addSubview(titleLabel)
-        view.addSubview(closeButton)
-        view.addSubview(clearButton)
         view.addSubview(downloadsView)
+        view.addSubview(topBar)
         
-        clearButton.alpha = 0
+        topBar.onLeftButtonTapped = { [unowned self] in
+            self.tapCloseButton()
+        }
+        topBar.onRightButtonTapped = { [unowned self] in
+            self.tapClearButton()
+        }
         
         downloadsView.delegate = self
         downloadsView.dataSource = self
         downloadsView.register(SongDownloadCell.self, forCellWithReuseIdentifier: SongDownloadCell.reuseId)
         
-        //downloadService.delegate.remove(browserVC)
-        downloadService.delegate.add(self)
-        //downloadService.delegate.add(browserVC)
-        
-        closeButton.addTarget(self, action: #selector(tapCloseButton), for: .touchUpInside)
-        clearButton.addTarget(self, action: #selector(tapClearButton), for: .touchUpInside)
-        
         layoutViews()
     }
     
     private func layoutViews() {
-        titleLabel.center.x = view.center.x
-        titleLabel.frame.origin.y = 26 
-
-        closeButton.center.y = titleLabel.center.y
-        closeButton.frame.origin.x = 14
+        topBar.frame.origin = .zero
+        topBar.frame.size = CGSize(width: view.frame.width, height: 82)
         
-        downloadsView.frame.size = CGSize(width: view.frame.width, height: view.frame.height - 62)
-        downloadsView.frame.origin.x = 0
-        downloadsView.frame.origin.y = 62
+        downloadsView.frame = view.frame
+        downloadsView.contentInset.top = topBar.frame.height + 4
+        downloadsView.scrollIndicatorInsets.top = downloadsView.contentInset.top
+        downloadsView.scrollIndicatorInsets.bottom = 5
     }
     
-    @objc private func tapCloseButton() {
-        downloadService.delegate.remove(self)
+    private func playSong(from download: SongDownload) {
+        print("playSong")
+    }
+    
+    private func pauseDownload(_ download: SongDownload) {
+        downloadService.pauseDownload(with: download.url)
+    }
+    
+    private func resumeDownload(_ download: SongDownload) {
+        downloadService.resumeDownload(with: download.url, resumeData: download.resumeData, title: download.title, id: download.id)
+    }
+    
+    private func removeDownload(at indexPath: IndexPath) {
+        downloadsManager.removeDownload(with: indexPath.item) {
+            self.downloadsView.deleteItems(at: [indexPath])
+        }
+    }
+    
+    private func checkFinishedDownloadsCount() {
+        DispatchQueue.global(qos: .userInteractive).async {
+            let count = self.downloadsManager.finishedDownloadsCount
+            DispatchQueue.main.async {
+                if count == 0 {
+                    self.topBar.hideRightButton()
+                } else {
+                    self.topBar.showRightButton()
+                }
+            }
+        }
+    }
+}
+
+extension DownloadsVC {
+    
+    func tapCloseButton() {
         dismiss(animated: true)
     }
     
-    @objc private func tapClearButton() {
-        
+    func tapClearButton() {
+        let alertVC = AlertController(message: "Clear finished downloads ?")
+        alertVC.font = UIFont(name: Fonts.general, size: 21)!
+        let cancelAction = Action(title: "Cancel", type: .cancel)
+        let clearAction = Action(title: "Clear", type: .destructive) { _ in
+            self.clearFinishedDownloads()
+        }
+        alertVC.addAction(clearAction)
+        alertVC.addAction(cancelAction)
+        alertVC.present()
     }
     
-    private func showInfo(for download: SongDownload) {
-        print("showInfo")
+    private func clearFinishedDownloads() {
+        downloadsManager.clearFinishedDownloads {
+            self.downloadsView.reloadData()
+        }
     }
-
 }
 
 extension DownloadsVC: SongDownloadCellDelegate {
@@ -112,133 +138,129 @@ extension DownloadsVC: SongDownloadCellDelegate {
     func tapRemoveButton(_ cell: SongDownloadCell) {
         guard let indexPath = downloadsView.indexPath(for: cell) else { return }
         downloadsManager.download(for: indexPath.item) { download in
-            if download.status == .downloaded {
-                self.downloadsManager.removeDownload(download) {
-                    DispatchQueue.main.async {
-                        self.downloadsView.deleteItems(at: [indexPath])
-                    }
-                }
-            } else {
+            if download.status == .downloading || download.status == .preparing {
                 self.downloadService.cancelDownload(with: download.url)
             }
+            self.removeDownload(at: indexPath)
         }
     }
     
     func tapReloadButton(_ cell: SongDownloadCell) {
         guard let indexPath = downloadsView.indexPath(for: cell) else { return }
         downloadsManager.download(for: indexPath.item) { download in
-            self.downloadService.resumeDownload(with: download.url, resumeData: download.resumeData, title: download.title)
+            self.resumeDownload(download)
         }
     }
-
 }
 
-extension DownloadsVC: DownloadServiceDelegate {
+extension DownloadsVC: BrowserDownloadDelegate {
     
-    func downloadServiceFinishedDownloading(to location: URL, with title: String, url: URL) {
-        //guard let download = download else { return }
-        //self.downloadsManager.setupStatus(.downloaded, forDownloadWith: url)
-        print("*******WILL reloadItems")
-        self.downloadsManager.indexForDownload(with: url) { index in
-            print("WILL reloadItems")
-            if let index = index {
-                print("WILL reloadItems")
-                self.downloadsView.reloadItems(at: [IndexPath(item: index, section: 0)])
+    func browserFailedDownload(with id: String) {
+        updateCellForDownload(with: id)
+    }
+    
+    func browserPausedDownload(with id: String) {
+        updateCellForDownload(with: id)
+    }
+    
+    func browserStartedDownload(with id: String) {
+        updateCellForDownload(with: id)
+    }
+    
+    func browserResumedDownload(with id: String) {
+        updateCellForDownload(with: id)
+    }
+    
+    func browserFinishedDownload(with id: String) {
+        updateCellForDownload(with: id)
+    }
+    
+    func browserUpdatedDownload(with id: String, with progress: Progress) {
+        downloadsManager.indexForDownload(with: id) { index in
+            guard let index = index else { return }
+            if let cell = self.downloadsView.cellForItem(at: IndexPath(item: index, section: 0))
+                as? SongDownloadCell {
+                cell.update(with: progress)
             }
         }
     }
     
-    func downloadServiceFailedDownloading(with url: URL) {
-        //self.downloadsManager.setupStatus(.downloaded, forDownloadWith: url)
-        self.downloadsManager.indexForDownload(with: url) { index in
-            if let index = index {
-                self.downloadsView.reloadItems(at: [IndexPath(item: index, section: 0)])
-            }
+    private func updateCellForDownload(with id: String) {
+        downloadsManager.indexForDownload(with: id) { index in
+            guard let index = index else { return }
+            let indexPath = IndexPath(item: index, section: 0)
+            guard self.downloadsView.cellForItem(at: indexPath) != nil else { return }
+            self.downloadsView.reloadItems(at: [indexPath])
         }
     }
-    
-    func downloadServiceDownloadedData(from url: URL, with byteCount: Int64, of totalByteCount: Int64) {
-        print("########downloadServiceDownloadedData")
-        downloadsManager.download(with: url) { download in
-            guard let download = download else { return }
-            self.downloadsManager.indexForDownload(with: url) { index in
-                guard let index = index else { return }
-                guard let cell = self.downloadsView.cellForItem(at: IndexPath(item: index, section: 0)) as? SongDownloadCell else {
-                    return
-                }
-                cell.update(with: download.progress)
-                print("downloadProgress \(download.progress.value) ( \(download.progress.description) )")
-            }
-        }
-    }
-    
-    func downloadServiceCanceledDownloading(with url: URL) {
-        downloadsManager.download(with: url) { download in
-            guard let download = download else { return }
-            self.downloadsManager.indexForDownload(with: url) { index in
-                if let index = index {
-                    self.downloadsManager.removeDownload(download) {
-                        DispatchQueue.main.async {
-                            self.downloadsView.deleteItems(at: [IndexPath(item: index, section: 0)])
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    func downloadServiceResumedDownloading(with url: URL) {
-        downloadsManager.setupStatus(.downloading, forDownloadWith: url)
-        downloadsManager.indexForDownload(with: url) { index in
-            if let index = index {
-                self.downloadsView.reloadItems(at: [IndexPath(item: index, section: 0)])
-            }
-        }
-    }
-    
-    func downloadServicePausedDownloading(with url: URL, resumeData: Data?, title: String) {
-        downloadsManager.setupStatus(.paused, forDownloadWith: url)
-        downloadsManager.indexForDownload(with: url) { index in
-            if let index = index {
-                self.downloadsView.reloadItems(at: [IndexPath(item: index, section: 0)])
-            }
-        }
-    }
-    
 }
 
 extension DownloadsVC: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return downloadsManager.downloadsCount
+        let count = downloadsManager.downloadsCount
+        checkFinishedDownloadsCount()
+        downloadsView.backgroundView = count == 0 ? alertView : nil
+        return count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SongDownloadCell.reuseId, for: indexPath) as! SongDownloadCell
         cell.delegate = self
+        cell.tag += 1
+        let tag = cell.tag
         downloadsManager.download(for: indexPath.item) { download in
-            cell.setup(for: download)
+            if cell.tag == tag {
+                cell.setup(for: download)
+            }
         }
         return cell
     }
-    
 }
 
 extension DownloadsVC: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         downloadsManager.download(for: indexPath.item) { download in
-            guard download.status != .downloaded else {
-                return self.showInfo(for: download)
-            }
-            if download.status == .downloading {
-                self.downloadService.pauseDownload(with: download.url)
-            } else if download.status == .paused || download.status == .failed {
-                self.downloadService.resumeDownload(with: download.url, resumeData: download.resumeData, title: download.title)
-            }
+            self.didSelectDownload(download, at: indexPath)
         }
     }
     
+    private func didSelectDownload(_ download: SongDownload, at indexPath: IndexPath) {
+        switch download.status {
+        case .downloaded : playSong(from: download)
+        case .downloading : pauseDownload(download)
+        case .paused : resumeDownload(download)
+        case .failed : showActionsForFailedDownload(download, at: indexPath)
+        case .preparing : break
+        }
+    }
+    
+    private func showActionsForFailedDownload(_ download: SongDownload, at indexPath: IndexPath) {
+        let actionSheet = ActionSheet()
+        actionSheet.cornerRadius = 12
+        actionSheet.corners = [.topLeft, .topRight]
+        actionSheet.actionCellHeight = Screen.is4inch ? 68 : 70
+        actionSheet.font = UIFont(name: Fonts.general, size: 21)!
+        let cancelAction = Action(title: "Cancel", type: .cancel)
+        let reloadAction = Action(title: "Try again", type: .normal) { _ in
+            self.resumeDownload(download)
+        }
+        let removeAction = Action(title: "Remove", type: .destructive) { _ in
+            self.removeDownload(at: indexPath)
+        }
+        actionSheet.addAction(reloadAction)
+        actionSheet.addAction(removeAction)
+        actionSheet.addAction(cancelAction)
+        actionSheet.present()
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if scrollView.contentOffset.y > -scrollView.contentInset.top {
+            topBar.makeOpaque(with: Colors.clearDarkWhite)
+        } else {
+            topBar.makeTransparent()
+        }
+    }
 }
-
 

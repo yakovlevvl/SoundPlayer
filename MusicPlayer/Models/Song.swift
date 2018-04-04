@@ -10,30 +10,39 @@ import RealmSwift
 
 class Song: Object {
     
-    @objc dynamic var title = "Unknown"
-    @objc dynamic var duration: Double = 0
-    @objc dynamic var creationDate = Date()
-    @objc private dynamic var filePath = ""
+    @objc dynamic var title = ""
+    @objc private dynamic var fileSubpath = ""
+    @objc private(set) dynamic var duration: Double = 0
+    @objc private(set) dynamic var creationDate = Date()
+    
+    @objc private(set) dynamic var id = UUID().uuidString
     
     @objc dynamic var album: Album?
+    
+    let playlists = LinkingObjects(fromType: Playlist.self, property: "songs")
     
     var artwork: UIImage? {
         return album?.artwork
     }
     
-    convenience init(url: URL) {
-        self.init()
-        self.url = url
-    }
-    
     var url: URL {
-        get {
-            return URL(fileURLWithPath: filePath)
-        }
-        set {
-            filePath = newValue.path
-        }
+        return URL(fileURLWithPath: filePath)
     }
     
+    convenience init(title: String, url: URL) {
+        self.init()
+        self.title = title
+        self.fileSubpath = url.lastPathComponent
+    }
     
+    override static func primaryKey() -> String? {
+        return "id"
+    }
+    
+    private var filePath: String {
+        let fileManager = FileManager.default
+        let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileUrl = documentsUrl.appendingPathComponent("Music").appendingPathComponent(fileSubpath)
+        return fileUrl.path
+    }
 }

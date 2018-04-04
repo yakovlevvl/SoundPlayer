@@ -18,7 +18,15 @@ final class DownloadControlButton: UIButton {
     
     var controlState: DownloadControlState = .remove {
         didSet {
-            setImage(controlState == .remove ? removeImage : reloadImage, for: .normal)
+            if controlState == .remove {
+                if oldValue != .remove {
+                    setImage(removeImage, for: .normal)
+                }
+            } else {
+                if oldValue != .reload {
+                    setImage(reloadImage, for: .normal)
+                }
+            }
         }
     }
     

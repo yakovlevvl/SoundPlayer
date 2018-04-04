@@ -30,8 +30,8 @@ final class AlertController: UIViewController {
     
     var font = UIFont.systemFont(ofSize: 19)
     
-    private let actionCellHeight: CGFloat = 58
     private let separatorWidth: CGFloat = 2
+    private let actionCellHeight: CGFloat = Screen.is4inch ? 58 : 62
     var separatorColor = UIColor(red: 245/255, green: 245/255, blue: 245/255, alpha: 1)
     var backgroundColor = UIColor.white
     
@@ -79,14 +79,13 @@ final class AlertController: UIViewController {
         var alertHeaderHeight: CGFloat = 0
         let alertWidth = view.frame.width - 50
         let messageHorizontalInset: CGFloat = 20
-        let messageVerticalInset: CGFloat = 28
+        let messageVerticalInset: CGFloat = Screen.is4inch ? 28 : 32
         let textFieldHorizontalInset: CGFloat = 24
         
         let style = NSMutableParagraphStyle()
         style.lineSpacing = 8
         style.alignment = .center
-        let attrString = NSAttributedString(string: message, attributes: [NSAttributedStringKey.paragraphStyle : style, NSAttributedStringKey.font : UIFont(name: Fonts.gotham, size: 19)!])
-        print(attrString)
+        let attrString = NSAttributedString(string: message, attributes: [NSAttributedStringKey.paragraphStyle : style, NSAttributedStringKey.font : font])
         
         let messageSize = attrString.boundingRect(with: CGSize(width: alertWidth - 2*messageHorizontalInset, height: CGFloat.greatestFiniteMagnitude), options: .usesLineFragmentOrigin, context: nil).size
         messageLabel.frame.size = messageSize
@@ -144,9 +143,11 @@ final class AlertController: UIViewController {
                 self.textField!.becomeFirstResponder()
             }
         } else {
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.8, options: [], animations: {
-                self.collectionView.center = self.view.center
+            UIView.animate(0.24) {
                 self.view.backgroundColor = UIColor(white: 0, alpha: 0.5)
+            }
+            UIView.animate(withDuration: 0.42, delay: 0, usingSpringWithDamping: 0.82, initialSpringVelocity: 0.78, options: [], animations: {
+                self.collectionView.center = self.view.center
             })
         }
     }
@@ -196,7 +197,7 @@ final class AlertController: UIViewController {
     }
     
     @objc private func dismiss() {
-        let duration = includeTextField ? 0.5 : 0.45
+        let duration = includeTextField ? 0.5 : ( Screen.is4inch ? 0.42 : 0.46 )
         UIView.animate(withDuration: duration, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 0.8, options: [], animations: {
             self.collectionView.frame.origin.y = self.view.frame.height
             self.view.backgroundColor = UIColor(white: 0, alpha: 0)
@@ -209,9 +210,11 @@ final class AlertController: UIViewController {
     @objc private func keyboardWillChangeFrame(notification: Notification) {
         let frame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
         if frame.origin.y == view.frame.height { return }
-        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.8, options: [], animations: {
-            self.collectionView.frame.origin.y = frame.origin.y - 40 - self.collectionView.frame.height
+        UIView.animate(0.24) {
             self.view.backgroundColor = UIColor(white: 0, alpha: 0.5)
+        }
+        UIView.animate(withDuration: 0.48, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.8, options: [], animations: {
+            self.collectionView.frame.origin.y = frame.origin.y - 40 - self.collectionView.frame.height
         })
     }
     

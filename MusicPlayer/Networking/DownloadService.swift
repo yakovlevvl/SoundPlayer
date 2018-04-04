@@ -6,51 +6,58 @@
 //  Copyright © 2018 Vladyslav Yakovlev. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
 class DownloadService: NSObject {
     
-    static let shared = DownloadService()
+    private var session: URLSession!
     
     private var downloads = [URL: Download]()
     
-    var delegate = MulticastDelegate<DownloadServiceDelegate>()
+    private static var shared: DownloadService!
     
-    private lazy var session: URLSession = {
+    weak var delegate: DownloadServiceDelegate?
+    
+    private init(delegate: DownloadServiceDelegate?) {
+        super.init()
+        self.delegate = delegate
+        let sessionId = "com.download.MusicPlayer"
         let configuration = URLSessionConfiguration.background(withIdentifier: sessionId)
-        return URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
-    }()
+        session = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
+    }
     
-    private let sessionId = "com.download.MusicPlayer"
+    static func shared(delegate: DownloadServiceDelegate? = nil) -> DownloadService {
+        if shared == nil {
+            shared = DownloadService(delegate: delegate)
+        } else if delegate != nil {
+            fatalError()
+        }
+        return shared
+    }
     
-    var backgroundCompletionHandler: (() -> ())?
-    
-    private override init() {}
-    
-    func startDownload(with url: URL, title: String) {
+    func startDownload(with url: URL, title: String? = nil, id: String? = nil) {
         guard downloads[url] == nil else { return }
         let task = session.downloadTask(with: url)
         let download = Download(task: task)
         download.title = title
+        download.id = id
         download.start()
         downloads[url] = download
-        delegate.invoke {
-            $0.downloadServiceStartedDownloading(with: url, title: title)
-        }
     }
     
     func pauseDownload(with url: URL) {
         guard let download = downloads[url] else { return }
         if download.isDownloading {
-            download.pause { data in
-                self.delegate.invoke {
-                    $0.downloadServicePausedDownloading(with: url, resumeData: data, title: download.title)
-                }
+            download.pause { resumeData in
+                self.delegate?.downloadServicePausedDownloading(with: url, resumeData: resumeData,
+                    title: download.title, id: download.id)
             }
         }
     }
     
-    func resumeDownload(with url: URL, resumeData: Data?, title: String) {
+    func resumeDownload(with url: URL, resumeData: Data?, title: String? = nil, id: String? = nil) {
+        guard downloads[url] == nil else { return }
+        delegate?.downloadServicePreparingToResumeDownloading(with: url, title: title, id: id)
         var task: URLSessionDownloadTask!
         if isValidResumeData(resumeData) {
             task = session.downloadTask(withResumeData: resumeData!)
@@ -59,35 +66,33 @@ class DownloadService: NSObject {
         }
         let download = Download(task: task)
         download.title = title
+        download.id = id
         download.start()
         downloads[url] = download
-        delegate.invoke {
-            $0.downloadServiceResumedDownloading(with: url)
-        }
     }
     
     func cancelDownload(with url: URL) {
         if let download = downloads[url] {
             download.cancel()
-            delegate.invoke {
-                $0.downloadServiceCanceledDownloading(with: url)
-            }
+            delegate?.downloadServiceCanceledDownloading(with: url, title: download.title, id: download.id)
         }
     }
     
+    func isDownloadExist(with url: URL) -> Bool {
+        return downloads[url] != nil
+    }
 }
 
 extension DownloadService: URLSessionDownloadDelegate {
     
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        guard let url = downloadTask.originalRequest?.url else { return }
-        guard let title = downloads[url]?.title else { return }
+        guard let url = downloadTask.url else { return }
+        let title = downloadTask.title
+        let id = downloadTask.id
         guard let httpResponse = downloadTask.response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode), fileExists(location.path) else {
-                delegate.invoke {
-                    $0.downloadServiceFailedSavingFile(with: url)
-                }
-                return print("finishedDownloadingWithError")
+                delegate?.downloadServiceFailedDownloading(with: url, resumeData: nil, title: title, id: id)
+                return
         }
         let fileManager = FileManager.default
         let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -95,56 +100,42 @@ extension DownloadService: URLSessionDownloadDelegate {
         if !fileManager.directoryExists(musicUrl.path) {
             try! fileManager.createDirectory(atPath: musicUrl.path, withIntermediateDirectories: true)
         }
-        var destinationUrl = musicUrl.appendingPathComponent(url.lastPathComponent)
-        
-        var index = 1
-        while fileExists(destinationUrl.path) {
-            let url = destinationUrl
-            var pathComponent = url.deletingPathExtension().lastPathComponent
-            pathComponent += "\(index)"
-            destinationUrl = destinationUrl.deletingLastPathComponent().appendingPathComponent(pathComponent).appendingPathExtension(destinationUrl.pathExtension)
-            index += 1
-        }
-        print(location.absoluteString)
+        var fileUrl = musicUrl.appendingPathComponent(url.lastPathComponent)
+        fileUrl = fileManager.changeUrlIfExists(fileUrl)
         do {
-            try fileManager.moveItem(at: location, to: destinationUrl)
-            DispatchQueue.main.async {
-                self.delegate.invoke {
-                    print("%%%%%%invoke delegate: \($0)")
-                    $0.downloadServiceFinishedDownloading(to: destinationUrl, with: url, title: title)
-                }
-            }
-            
-            print("finishedDownloading")
-            print("savedToUrl *** \(destinationUrl) ***")
-        } catch let error as NSError {
-            delegate.invoke {
-                $0.downloadServiceFailedSavingFile(with: url)
-            }
-            print("Error while moving file to destinationUrl:", error.localizedDescription)
+            try fileManager.moveItem(at: location, to: fileUrl)
+            delegate?.downloadServiceFinishedDownloading(with: url, to: fileUrl, title: title, id: id)
+        } catch {
+            delegate?.downloadServiceFailedSavingFileFromDownload(with: url, title: title, id: id)
         }
     }
     
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        guard let url = downloadTask.originalRequest?.url else { return }
-        delegate.invoke {
-            $0.downloadServiceDownloadedData(from: url, with: totalBytesWritten, of: totalBytesExpectedToWrite)
+        guard let url = downloadTask.url else { return }
+        guard let download = downloads[url] else { return }
+        let title = download.title
+        let id = download.id
+        if !download.isDownloading {
+            download.isDownloading = true
+            DispatchQueue.global().async {
+                self.delegate?.downloadServiceStartedDownloading(with: url, title: title, id: id)
+            }
         }
-        print("downloaded \(totalBytesWritten)b of \(totalBytesExpectedToWrite)b")
+        delegate?.downloadServiceDownloadedData(from: url, with: totalBytesWritten, of: totalBytesExpectedToWrite, title: title, id: id)
     }
     
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         print(error == nil ? "downloadCompleted" : "downloadCompletedWithError: \(error!.localizedDescription)")
         
-        guard let url = task.originalRequest?.url else { return }
+        let downloadTask = task as! URLSessionDownloadTask
+        guard let url = downloadTask.url else { return }
         
         downloads[url] = nil
         
         guard let error = error as NSError? else { return }
-        guard error.code != NSURLErrorCancelled else { return }
         
-        let downloadTask = task as! URLSessionDownloadTask
-        let title = downloadTask.taskDescription!
+        let title = downloadTask.title
+        let id = downloadTask.id
         
         var resumeData = error.userInfo[NSURLSessionDownloadTaskResumeData] as? Data
         
@@ -154,17 +145,28 @@ extension DownloadService: URLSessionDownloadDelegate {
         
         if (error.userInfo[NSURLErrorBackgroundTaskCancelledReasonKey]
             as? NSNumber)?.intValue != nil {
-            resumeDownload(with: url, resumeData: resumeData, title: title)
+            resumeDownload(with: url, resumeData: resumeData, title: title, id: id)
         } else {
-            delegate.invoke {
-                $0.downloadServiceFailedDownloading(with: url, resumeData: resumeData, title: title)
-            }
+            guard error.code != NSURLErrorCancelled else { return }
+            delegate?.downloadServiceFailedDownloading(with: url, resumeData: resumeData, title: title, id: id)
         }
     }
     
     func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         let credential = URLCredential(trust: challenge.protectionSpace.serverTrust!)
         completionHandler(.useCredential, credential)
+    }
+}
+
+extension DownloadService: URLSessionDelegate {
+    
+    func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
+        DispatchQueue.main.async {
+            guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+                let completionHandler = appDelegate.backgroundCompletionHandler else { return }
+            appDelegate.backgroundCompletionHandler = nil
+            completionHandler()
+        }
     }
 }
 
@@ -205,51 +207,27 @@ extension DownloadService {
     }
 }
 
-extension DownloadService: URLSessionDelegate {
-
-    func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
-        print("urlSessionDidFinishEvents")
-        if let completionHandler = backgroundCompletionHandler {
-            DispatchQueue.main.async {
-                completionHandler()
-            }
-        }
-    }
-}
-
 protocol DownloadServiceDelegate: class {
-
-    func downloadServiceFailedSavingFile(with downloadUrl: URL)
-    func downloadServiceFailedDownloading(with url: URL, resumeData: Data?, title: String)
-    func downloadServiceResumedDownloading(with url: URL)
-    func downloadServiceCanceledDownloading(with url: URL)
-    func downloadServiceStartedDownloading(with url: URL, title: String)
-    func downloadServiceFinishedDownloading(to location: URL, with url: URL, title: String)
-    func downloadServicePausedDownloading(with url: URL, resumeData: Data?, title: String)
-    func downloadServiceDownloadedData(from url: URL, with byteCount: Int64, of totalByteCount: Int64)
-
+    
+    func downloadServiceStartedDownloading(with url: URL, title: String?, id: String?)
+    func downloadServiceCanceledDownloading(with url: URL, title: String?, id: String?)
+    func downloadServicePreparingToResumeDownloading(with url: URL, title: String?, id: String?)
+    func downloadServiceFailedSavingFileFromDownload(with url: URL, title: String?, id: String?)
+    func downloadServiceFailedDownloading(with url: URL, resumeData: Data?, title: String?, id: String?)
+    func downloadServicePausedDownloading(with url: URL, resumeData: Data?, title: String?, id: String?)
+    func downloadServiceFinishedDownloading(with url: URL, to location: URL, title: String?, id: String?)
+    func downloadServiceDownloadedData(from url: URL, with byteCount: Int64, of totalByteCount: Int64, title: String?, id: String?)
 }
 
 extension DownloadServiceDelegate {
     
-    func downloadServiceFailedSavingFile(with downloadUrl: URL) {}
-    func downloadServiceFailedDownloading(with url: URL, resumeData: Data?, title: String) {}
-    func downloadServiceResumedDownloading(with url: URL) {}
-    func downloadServiceCanceledDownloading(with url: URL) {}
-    func downloadServiceStartedDownloading(with url: URL, title: String) {}
-    func downloadServiceFinishedDownloading(to location: URL, with url: URL, title: String) {}
-    func downloadServicePausedDownloading(with url: URL, resumeData: Data?, title: String) {}
-    func downloadServiceDownloadedData(from url: URL, with byteCount: Int64, of totalByteCount: Int64) {}
-    
+    func downloadServiceStartedDownloading(with url: URL, title: String?, id: String?) {}
+    func downloadServiceCanceledDownloading(with url: URL, title: String?, id: String?) {}
+    func downloadServicePreparingToResumeDownloading(with url: URL, title: String?, id: String?) {}
+    func downloadServiceFailedSavingFileFromDownload(with url: URL, title: String?, id: String?) {}
+    func downloadServiceFailedDownloading(with url: URL, resumeData: Data?, title: String?, id: String?) {}
+    func downloadServicePausedDownloading(with url: URL, resumeData: Data?, title: String?, id: String?) {}
+    func downloadServiceFinishedDownloading(with url: URL, to location: URL, title: String?, id: String?) {}
+    func downloadServiceDownloadedData(from url: URL, with byteCount: Int64, of totalByteCount: Int64, title: String?, id: String?) {}
 }
-
-enum DownloadStatus: String {
-    
-    case paused = "Paused"
-    case failed = "Failed"
-    case preparing = "Preparing"
-    case downloaded = "Downloaded"
-    case downloading = "Downloading"
-}
-
 

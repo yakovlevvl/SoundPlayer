@@ -15,9 +15,8 @@ final class ProgressView: UIView {
             if progress > 1 {
                 progress = 1
             }
-            if progress < oldValue {
-                progressView.alpha = 1
-                progressView.frame.size.width = 0
+            if autoreset, progress < oldValue {
+                reset()
             }
             animateProgress(with: progress)
         }
@@ -34,6 +33,8 @@ final class ProgressView: UIView {
             progressView.backgroundColor = progressColor
         }
     }
+    
+    var autoreset = false
     
     private let progressView = UIView()
     
@@ -66,11 +67,13 @@ final class ProgressView: UIView {
         }
     }
     
+    func reset() {
+        progressView.alpha = 1
+        progressView.frame.size.width = 0
+    }
+    
     func setupProgressWithoutAnimation(with value: Double) {
         progressView.frame.size.width = frame.width*CGFloat(value)
-        if value == 1 {
-            progressView.alpha = 0
-        }
     }
     
     required init?(coder aDecoder: NSCoder) {

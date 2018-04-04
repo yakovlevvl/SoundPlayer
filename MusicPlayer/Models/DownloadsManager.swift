@@ -11,13 +11,21 @@ import RealmSwift
 class DownloadsManager {
     
     private let realmQueue = DispatchQueue(label: "com.MusicPlayer.realmQueue", qos: .userInteractive, attributes: .concurrent)
-    
+
     private var downloads: Results<SongDownload> {
         return try! Realm().objects(SongDownload.self).sorted(byKeyPath: "creationDate", ascending: false)
     }
     
+    private var finishedDownloads: Results<SongDownload> {
+        return try! Realm().objects(SongDownload.self).filter("downloadStatus = %@", DownloadStatus.downloaded.rawValue)
+    }
+    
     var downloadsCount: Int {
         return try! Realm().objects(SongDownload.self).count
+    }
+    
+    var finishedDownloadsCount: Int {
+        return finishedDownloads.count
     }
     
     func addDownload(_ download: SongDownload, completion: @escaping () -> ()) {
@@ -27,25 +35,61 @@ class DownloadsManager {
                 try! realm.write {
                     realm.add(download)
                 }
-                realm.refresh()
                 DispatchQueue.main.async {
+                    try! Realm().refresh()
                     completion()
                 }
             }
         }
     }
     
-    func removeDownload(_ download: SongDownload, completion: @escaping () -> ()) {
-        let downloadRef = ThreadSafeReference(to: download)
+    func addDownload(with url: URL, title: String, completion: @escaping (String) -> ()) {
         realmQueue.async {
-            let realm = try! Realm()
-            guard let download = realm.resolve(downloadRef) else {
+            autoreleasepool {
+                let download = SongDownload(url: url, title: title)
+                let id = download.id
+                let realm = try! Realm()
+                try! realm.write {
+                    realm.add(download)
+                }
+                realm.refresh()
+                DispatchQueue.global(qos: .userInteractive).async {
+                    completion(id)
+                }
+            }
+        }
+    }
+    
+    func removeDownload(with index: Int, completion: @escaping () -> ()) {
+        realmQueue.async {
+            let download = self.downloads[index]
+            self.removeDownload(download) {
+                completion()
+            }
+        }
+    }
+    
+    func removeDownload(with id: String, completion: @escaping () -> ()) {
+        realmQueue.async {
+            guard let download = self.download(with: id) else {
+                DispatchQueue.main.async {
+                    completion()
+                }
                 return
             }
-            try! realm.write {
-                realm.delete(download)
+            self.removeDownload(download) {
+                completion()
             }
-            realm.refresh()
+        }
+    }
+    
+    func removeDownload(_ download: SongDownload, completion: @escaping () -> ()) {
+        let realm = try! Realm()
+        try! realm.write {
+            realm.delete(download)
+        }
+        DispatchQueue.main.async {
+            try! Realm().refresh()
             completion()
         }
     }
@@ -64,9 +108,9 @@ class DownloadsManager {
         }
     }
     
-    func download(with url: URL, completion: @escaping (SongDownload?) -> ()) {
+    func download(with id: String, completion: @escaping (SongDownload?) -> ()) {
         realmQueue.async {
-            guard let download = self.download(with: url) else {
+            guard let download = self.download(with: id) else {
                 DispatchQueue.main.async {
                     completion(nil)
                 }
@@ -83,37 +127,74 @@ class DownloadsManager {
         }
     }
     
-    func indexForDownload(with url: URL, completion: @escaping (Int?) -> ()) {
+    func indexForDownload(with id: String, completion: @escaping (Int?) -> ()) {
         realmQueue.async {
-            let index = self.downloads.index {
-                $0.url == url
-            }
+            let index = self.downloads.index(matching: "id = %@", id)
             DispatchQueue.main.async {
                 completion(index)
             }
         }
     }
     
-    func setupStatus(_ status: DownloadStatus, forDownloadWith url: URL) {
+    func clearResumeDataForDownload(with id: String, completion: @escaping () -> ()) {
         realmQueue.async {
-            guard let download = self.download(with: url) else {
+            guard let download = self.download(with: id) else {
+                return
+            }
+            download.clearResumeData()
+            DispatchQueue.main.async {
+                completion()
+            }
+        }
+    }
+    
+    func setupResumeData(_ data: Data?, forDownloadWith id: String, completion: @escaping () -> ()) {
+        realmQueue.async {
+            guard let download = self.download(with: id) else {
+                return
+            }
+            download.resumeData = data
+            DispatchQueue.main.async {
+                completion()
+            }
+        }
+    }
+    
+    func setupStatus(_ status: DownloadStatus, forDownloadWith id: String, completion: @escaping () -> ()) {
+        realmQueue.async {
+            guard let download = self.download(with: id) else {
                 return
             }
             download.status = status
-        }
-    }
-    
-    func setupProgress(_ progress: Progress, forDownloadWith url: URL) {
-        realmQueue.async {
-            guard let download = self.download(with: url) else {
-                return
+            DispatchQueue.main.async {
+                completion()
             }
-            download.progress = progress
         }
     }
     
-    private func download(with url: URL) -> SongDownload? {
-        return downloads.filter { $0.url == url }.first
+    func setupProgress(_ progress: Progress, forDownloadWith id: String) {
+        realmQueue.async {
+            if let download = self.download(with: id) {
+                download.progress = progress
+            }
+        }
+    }
+    
+    func clearFinishedDownloads(completion: @escaping () -> ()) {
+        realmQueue.async {
+            let realm = try? Realm()
+            try? realm?.write {
+                realm?.delete(self.finishedDownloads)
+            }
+            DispatchQueue.main.async {
+                try! Realm().refresh()
+                completion()
+            }
+        }
+    }
+    
+    private func download(with id: String) -> SongDownload? {
+        return try! Realm().object(ofType: SongDownload.self, forPrimaryKey: id)
     }
     
     

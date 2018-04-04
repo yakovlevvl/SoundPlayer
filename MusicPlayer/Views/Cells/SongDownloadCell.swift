@@ -24,7 +24,7 @@ final class SongDownloadCell: UICollectionViewCell {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.frame.size.height = 28
-        label.font = UIFont(name: Fonts.general, size: 19)
+        label.font = UIFont(name: Fonts.general, size: 20)
         return label
     }()
     
@@ -37,7 +37,8 @@ final class SongDownloadCell: UICollectionViewCell {
     
     private let progressView: ProgressView = {
         let view = ProgressView()
-        view.progressColor = UIColor(hex: "cce0f7")
+        view.isUserInteractionEnabled = false
+        view.progressColor = UIColor(hex: "d7e6f9")
         return view
     }()
     
@@ -68,11 +69,8 @@ final class SongDownloadCell: UICollectionViewCell {
         
         contentView.layer.cornerRadius = 12
         contentView.clipsToBounds = true
-        layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 12).cgPath
-        layer.shadowOpacity = 0.12
-        layer.shadowOffset = .zero
-        layer.shadowColor = UIColor.gray.cgColor
-        layer.shadowRadius = 6
+        
+        setupShadow()
         
         layoutViews()
     }
@@ -82,8 +80,8 @@ final class SongDownloadCell: UICollectionViewCell {
         
         icon.center.y = contentView.center.y
         controlButton.center.y = contentView.center.y
-        titleLabel.center.y = contentView.frame.height/3
-        progressLabel.center.y = 2*contentView.frame.height/3
+        titleLabel.center.y = (contentView.frame.height/3).rounded() - 1
+        progressLabel.center.y = 2*(contentView.frame.height/3).rounded() + 3
         
         icon.frame.origin.x = 12
         controlButton.frame.origin.x = frame.width - controlButton.frame.width - 14
@@ -93,6 +91,14 @@ final class SongDownloadCell: UICollectionViewCell {
         
         titleLabel.frame.size.width = controlButton.frame.minX - titleLabel.frame.minX - 10
         progressLabel.frame.size.width = titleLabel.frame.width
+    }
+    
+    private func setupShadow() {
+        layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 12).cgPath
+        layer.shadowOpacity = 0.12
+        layer.shadowOffset = .zero
+        layer.shadowColor = UIColor.gray.cgColor
+        layer.shadowRadius = 7
     }
     
     @objc private func tapControlButton() {
@@ -105,25 +111,28 @@ final class SongDownloadCell: UICollectionViewCell {
     
     func setup(for download: SongDownload) {
         titleLabel.text = download.title
-        if download.status == .downloaded {
-            progressLabel.text = download.totalSize
+        
+        switch download.status {
+            
+        case .downloaded : progressLabel.text = download.totalSize
             controlButton.controlState = .remove
-            progressView.alpha = 0
-        }
-        if download.status == .downloading {
-            progressLabel.text = download.progress.description
+            icon.tintColor = UIColor(hex: "D0021B")
+            
+        case .downloading : progressLabel.text = download.progress.description
             controlButton.controlState = .remove
-        }
-        if download.status == .paused {
-            progressLabel.text = "Paused " + download.progress.description
-            controlButton.controlState = .remove
-        }
-        if download.status == .failed {
-            progressLabel.text = "Failed"
+            progressView.setupProgressWithoutAnimation(with: download.progress.value)
+            
+        case .failed : progressLabel.text = "Failed"
+            progressLabel.textColor = .red
             controlButton.controlState = .reload
-            progressView.alpha = 1
+            
+        case .paused : progressLabel.text = "Paused " + download.progress.description
+            controlButton.controlState = .remove
+            progressView.setupProgressWithoutAnimation(with: download.progress.value)
+            
+        case .preparing : progressLabel.text = "Preparing..."
+            controlButton.controlState = .remove
         }
-        //progressView.progress = download.progress
     }
     
     func update(with progress: Progress) {
@@ -133,13 +142,14 @@ final class SongDownloadCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        progressView.alpha = 1
+        progressView.reset()
+        icon.tintColor = .black
+        progressLabel.textColor = .black
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
 }
 
 protocol SongDownloadCellDelegate: class {

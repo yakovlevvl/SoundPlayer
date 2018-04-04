@@ -8,31 +8,44 @@
 
 import UIKit
 import RealmSwift
+import UserNotifications
 
 @UIApplicationMain
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    
+    var backgroundCompletionHandler: (() -> ())?
+    
+    let notificationDelegate = NotificationDelegate()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        
+        let center = UNUserNotificationCenter.current()
+        
+        center.delegate = notificationDelegate
+        
+        let options: UNAuthorizationOptions = [.alert, .sound]
+        
+        center.requestAuthorization(options: options) { granted, error in }
         
         let config = Realm.Configuration(
             // Set the new schema version. This must be greater than the previously used
             // version (if you've never set a schema version before, the version is 0).
-            schemaVersion: 2,
-            
+            schemaVersion: 5,
+
             // Set the block which will be called automatically when opening a Realm with
             // a schema version lower than the one set above
             migrationBlock: { migration, oldSchemaVersion in
                 // We haven’t migrated anything yet, so oldSchemaVersion == 0
-                if (oldSchemaVersion < 2) {
+                if oldSchemaVersion < 5 {
                     // Nothing to do!
                     // Realm will automatically detect new properties and removed properties
                     // And will update the schema on disk automatically
                 }
         })
-        
+
         // Tell Realm to use this new configuration object for the default Realm
         Realm.Configuration.defaultConfiguration = config
         
@@ -41,16 +54,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 //            realm.deleteAll()
 //        }
         
-        window = UIWindow(frame: UIScreen.main.bounds)
-        window?.rootViewController = BrowserVC()
+        window = UIWindow()
+        window?.rootViewController = BaseVC()
         window?.makeKeyAndVisible()
         
         return true
     }
     
     func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
-        print("handleEventsForBackgroundURLSession")
-        DownloadService.shared.backgroundCompletionHandler = completionHandler
+        print("~handleEventsForBackgroundURLSession~")
+        backgroundCompletionHandler = completionHandler
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

@@ -12,15 +12,27 @@ class Download {
     
     var isDownloading = false
     
-    private var task: URLSessionDownloadTask
+    private let task: URLSessionDownloadTask
     
     var url: URL? {
-        return task.originalRequest?.url
+        return task.url
     }
     
-    var title = "" {
-        didSet {
-            task.taskDescription = title
+    var id: String? {
+        get {
+            return task.id
+        }
+        set {
+            task.id = newValue
+        }
+    }
+    
+    var title: String? {
+        get {
+            return task.title
+        }
+        set {
+            task.title = newValue
         }
     }
     
@@ -30,18 +42,15 @@ class Download {
     
     func start() {
         task.resume()
-        isDownloading = true
-    }
-    
-    func pause(completion: @escaping (Data?) -> ()) {
-        isDownloading = false
-        task.cancel { data in
-            completion(data)
-        }
     }
     
     func cancel() {
         task.cancel()
     }
     
+    func pause(completion: @escaping (Data?) -> ()) {
+        task.cancel { data in
+            completion(data)
+        }
+    }
 }

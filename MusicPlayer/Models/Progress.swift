@@ -14,12 +14,12 @@ struct Progress {
     var downloadedByteCount: Int64 = 0
     
     var value: Double {
-        return Double(downloadedByteCount)/Double(totalByteCount)
+        return totalByteCount != 0 ? Double(downloadedByteCount)/Double(totalByteCount) : 0
     }
     
     var description: String {
-        let totalSizeString = ByteCountFormatter.string(fromByteCount: totalByteCount, countStyle: .file)
-        let downloadedSizeString = ByteCountFormatter.string(fromByteCount: downloadedByteCount, countStyle: .file)
+        let totalSizeString = ByteCountFormatter.string(fromByteCount: totalByteCount, countStyle: .file).capitalized
+        let downloadedSizeString = ByteCountFormatter.string(fromByteCount: downloadedByteCount, countStyle: .file).capitalized
         return "\(downloadedSizeString) of \(totalSizeString)"
     }
 }
