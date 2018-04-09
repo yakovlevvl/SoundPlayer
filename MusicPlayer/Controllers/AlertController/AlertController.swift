@@ -262,7 +262,7 @@ extension AlertController: UICollectionViewDelegateFlowLayout {
                 return
             }
         }
-        action.handler?(action)
+        action.handler?()
         dismiss()
     }
 }
@@ -310,9 +310,9 @@ struct Action {
     
     private(set) var type: ActionType
     
-    private(set) var handler: ((Action) -> ())?
+    private(set) var handler: (() -> ())?
     
-    init(title: String, type: ActionType, handler: ((Action) -> ())? = nil) {
+    init(title: String, type: ActionType, handler: (() -> ())? = nil) {
         self.title = title
         self.type = type
         self.handler = handler

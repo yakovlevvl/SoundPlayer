@@ -43,6 +43,10 @@ class Library {
         return try! Realm().objects(Playlist.self).count
     }
     
+    var allSongs: [Song] {
+        return Array(songs)
+    }
+    
     var songsWithoutAlbum: [Song] {
         return Array(songs.filter("album = nil"))
     }
@@ -147,6 +151,28 @@ class Library {
         }
     }
     
+    func addPlaylist(with title: String, songs: [Song], artwork: UIImage?) {
+        let playlist = Playlist(title: title)
+        playlist.artwork = artwork
+        let realm = try! Realm()
+        try! realm.write {
+            playlist.songs.append(objectsIn: songs)
+            realm.add(playlist)
+        }
+        realm.refresh()
+    }
+    
+    func editPlaylist(_ playlist: Playlist, with title: String, songs: [Song], artwork: UIImage?) {
+        let realm = try! Realm()
+        try! realm.write {
+            playlist.title = title
+            playlist.artwork = artwork
+            playlist.songs.removeAll()
+            playlist.songs.append(objectsIn: songs)
+        }
+        realm.refresh()
+    }
+    
     func removeSong(with index: Int, completion: @escaping () -> ()) {
         libraryQueue.async {
             let song = self.songs[index]
@@ -247,10 +273,65 @@ class Library {
         }
     }
     
+    func removeSongFromPlaylist(_ song: Song, playlist: Playlist, completion: @escaping () -> ()) {
+        let realm = try! Realm()
+        try! realm.write {
+            if let index = playlist.songs.index(of: song) {
+                playlist.songs.remove(at: index)
+            }
+        }
+        DispatchQueue.main.async {
+            try! Realm().refresh()
+            completion()
+        }
+    }
+    
+    func removePlaylist(_ playlist: Playlist, completion: @escaping () -> ()) {
+        let realm = try! Realm()
+        try! realm.write {
+            playlist.artwork = nil
+            realm.delete(playlist)
+        }
+        DispatchQueue.main.async {
+            try! Realm().refresh()
+            completion()
+        }
+    }
+    
+    func removeEmptyPlaylists(completion: @escaping (Bool) -> ()) {
+        libraryQueue.async {
+            let realm = try! Realm()
+            let playlists = realm.objects(Playlist.self).filter("songs.@count = 0")
+            if playlists.isEmpty {
+                return DispatchQueue.main.async {
+                    completion(false)
+                }
+            }
+            try! realm.write {
+                for playlist in playlists {
+                    playlist.artwork = nil
+                    realm.delete(playlist)
+                }
+            }
+            DispatchQueue.main.async {
+                try! Realm().refresh()
+                completion(true)
+            }
+        }
+    }
+    
     func addSong(_ song: Song, to album: Album) {
         let realm = try! Realm()
         try! realm.write {
             song.album = album
+        }
+        realm.refresh()
+    }
+    
+    func addSongs(_ songs: [Song], to playlist: Playlist) {
+        let realm = try! Realm()
+        try! realm.write {
+            playlist.songs.append(objectsIn: songs)
         }
         realm.refresh()
     }
@@ -260,6 +341,51 @@ class Library {
     }
 
     
+}
+
+extension Library {
+    
+    func songsWithTitleStarted(with text: String, completion: @escaping ([Song]) -> ()) {
+        libraryQueue.async {
+            let songs = self.songs.filter("title BEGINSWITH[cd] %@", text)
+            let songsRef = ThreadSafeReference(to: songs)
+            DispatchQueue.main.async {
+                let realm = try! Realm()
+                guard let songs = realm.resolve(songsRef) else {
+                    return
+                }
+                completion(Array(songs))
+            }
+        }
+    }
+    
+    func albumsWithTitleStarted(with text: String, completion: @escaping ([Album]) -> ()) {
+        libraryQueue.async {
+            let albums = self.albums.filter("title BEGINSWITH[cd] %@", text)
+            let albumsRef = ThreadSafeReference(to: albums)
+            DispatchQueue.main.async {
+                let realm = try! Realm()
+                guard let albums = realm.resolve(albumsRef) else {
+                    return
+                }
+                completion(Array(albums))
+            }
+        }
+    }
+    
+    func playlistsWithTitleStarted(with text: String, completion: @escaping ([Playlist]) -> ()) {
+        libraryQueue.async {
+            let playlists = self.playlists.filter("title BEGINSWITH[cd] %@", text)
+            let playlistsRef = ThreadSafeReference(to: playlists)
+            DispatchQueue.main.async {
+                let realm = try! Realm()
+                guard let playlists = realm.resolve(playlistsRef) else {
+                    return
+                }
+                completion(Array(playlists))
+            }
+        }
+    }
 }
 
 extension Library {

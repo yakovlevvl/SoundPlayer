@@ -8,9 +8,36 @@
 
 import UIKit
 
-final class AlbumView: UICollectionReusableView {
+final class AlbumView: PlaylistView {
     
-    weak var delegate: AlbumViewDelegate?
+    private let artistLabel: UILabel = {
+        let label = UILabel()
+        label.frame.size.height = 26
+        label.textColor = Colors.red
+        label.font = UIFont(name: Fonts.general, size: 19)
+        return label
+    }()
+    
+    override func setupViews() {
+        super.setupViews()
+        addSubview(artistLabel)
+    }
+    
+    override func layoutViews() {
+        super.layoutViews()
+        artistLabel.frame.origin.y = titleLabel.frame.maxY + 5
+        artistLabel.frame.origin.x = titleLabel.frame.origin.x
+        artistLabel.frame.size.width = titleLabel.frame.width
+    }
+    
+    func setupArtist(_ artist: String) {
+        artistLabel.text = artist
+    }
+}
+
+class PlaylistView: UICollectionReusableView {
+    
+    weak var delegate: PlaylistViewDelegate?
     
     private let artworkView: ArtworkView = {
         let view = ArtworkView()
@@ -18,18 +45,10 @@ final class AlbumView: UICollectionReusableView {
         return view
     }()
     
-    private let titleLabel: UILabel = {
+    fileprivate let titleLabel: UILabel = {
         let label = UILabel()
         label.frame.size.height = 26
         label.font = UIFont(name: Fonts.general, size: 20)
-        return label
-    }()
-    
-    private let artistLabel: UILabel = {
-        let label = UILabel()
-        label.frame.size.height = 26
-        label.textColor = Colors.red
-        label.font = UIFont(name: Fonts.general, size: 19)
         return label
     }()
     
@@ -69,18 +88,18 @@ final class AlbumView: UICollectionReusableView {
         return button
     }()
     
-    static let reuseId = "AlbumView"
+    static let reuseId = "PlaylistView"
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
+        layoutViews()
     }
     
-    private func setupViews() {
+    fileprivate func setupViews() {
         backgroundColor = .clear
         
         addSubview(titleLabel)
-        addSubview(artistLabel)
         addSubview(artworkView)
         
         addSubview(moreButton)
@@ -90,20 +109,14 @@ final class AlbumView: UICollectionReusableView {
         moreButton.addTarget(self, action: #selector(tapMoreButton), for: .touchUpInside)
         playButton.addTarget(self, action: #selector(tapPlayButton), for: .touchUpInside)
         shuffleButton.addTarget(self, action: #selector(tapShuffleButton), for: .touchUpInside)
-        
-        layoutViews()
     }
     
-    private func layoutViews() {
+    fileprivate func layoutViews() {
         artworkView.frame.origin = CGPoint(x: 20, y: 1)
         
         titleLabel.frame.origin.y = artworkView.frame.minY + 8
         titleLabel.frame.origin.x = artworkView.frame.maxX + 20
         titleLabel.frame.size.width = frame.width - titleLabel.frame.minX - 20
-        
-        artistLabel.frame.origin.y = titleLabel.frame.maxY + 5
-        artistLabel.frame.origin.x = titleLabel.frame.origin.x
-        artistLabel.frame.size.width = titleLabel.frame.width
         
         playButton.center.x = artworkView.center.x
         playButton.frame.origin.y = artworkView.frame.maxY + 30
@@ -132,14 +145,10 @@ final class AlbumView: UICollectionReusableView {
     }
 }
 
-extension AlbumView {
+extension PlaylistView {
     
     func setupTitle(_ title: String) {
         titleLabel.text = title
-    }
-    
-    func setupArtist(_ artist: String) {
-        artistLabel.text = artist
     }
     
     func setupArtworkImage(_ image: UIImage?) {
@@ -147,10 +156,12 @@ extension AlbumView {
     }
 }
 
-protocol AlbumViewDelegate: class {
+protocol PlaylistViewDelegate: class {
     
     func tapMoreButton()
     func tapPlayButton()
     func tapShuffleButton()
 }
+
+protocol AlbumViewDelegate: PlaylistViewDelegate {}
 

@@ -8,7 +8,7 @@
 
 import UIKit
 
-final class ActionSheet: UIViewController {
+class ActionSheet: UIViewController {
     
     private var window: UIWindow?
     
@@ -31,7 +31,6 @@ final class ActionSheet: UIViewController {
         collectionView.isScrollEnabled = false
         return collectionView
     }()
-    
     
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -133,7 +132,7 @@ final class ActionSheet: UIViewController {
         let cancelAction = actions.first {
             $0.type == .cancel
         }
-        cancelAction!.handler?(cancelAction!)
+        cancelAction!.handler?()
         dismiss()
     }
     
@@ -162,7 +161,7 @@ extension ActionSheet: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let action = actions[indexPath.item]
-        action.handler?(action)
+        action.handler?()
         dismiss()
     }
 }

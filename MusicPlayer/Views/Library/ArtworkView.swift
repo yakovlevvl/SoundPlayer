@@ -19,6 +19,8 @@ final class ArtworkView: UIView {
         return imageView
     }()
     
+    var showShadow = true
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -36,7 +38,9 @@ final class ArtworkView: UIView {
     
     private func layoutViews() {
         imageView.frame = bounds
-        setupShadow()
+        if showShadow {
+            setupShadow()
+        }
     }
     
     private func setupShadow() {

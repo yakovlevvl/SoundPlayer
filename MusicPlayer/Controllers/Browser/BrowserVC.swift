@@ -190,7 +190,7 @@ final class BrowserVC: UIViewController {
         alertVC.textFieldText = url.lastPathComponent
         alertVC.font = UIFont(name: Fonts.general, size: 21)!
         let cancelAction = Action(title: "Cancel", type: .cancel)
-        let saveAction = Action(title: "Save", type: .normal) { _ in
+        let saveAction = Action(title: "Save", type: .normal) { 
             let songName = alertVC.textFieldText!
             self.downloadSong(with: url, with: songName)
         }
@@ -338,21 +338,15 @@ extension BrowserVC: BrowserToolBarDelegate {
     }
     
     private func showActionsForBookmarks(currentUrl: URL) {
-        let actionSheet = ActionSheet()
-        actionSheet.actionCellHeight = 70
-        actionSheet.cornerRadius = 12
-        actionSheet.corners = [.topLeft, .topRight]
-        actionSheet.font = UIFont(name: Fonts.general, size: 21)!
-        let cancelAction = Action(title: "Cancel", type: .cancel)
-        let addAction = Action(title: "Add to Bookmarks", type: .normal) { _ in
+        let actionSheet = RoundActionSheet()
+        let addAction = Action(title: "Add to Bookmarks", type: .normal) {
             self.showAlertViewForSaveBookmark(with: currentUrl)
         }
-        let showAction = Action(title: "Show Bookmarks", type: .normal) { _ in
+        let showAction = Action(title: "Show Bookmarks", type: .normal) {
             self.showBookmarks()
         }
         actionSheet.addAction(addAction)
         actionSheet.addAction(showAction)
-        actionSheet.addAction(cancelAction)
         actionSheet.present()
     }
     
@@ -365,7 +359,7 @@ extension BrowserVC: BrowserToolBarDelegate {
         alertVC.textFieldText = webView.title ?? ""
         alertVC.font = UIFont(name: Fonts.general, size: 21)!
         let cancelAction = Action(title: "Cancel", type: .cancel)
-        let saveAction = Action(title: "Save", type: .normal) { _ in
+        let saveAction = Action(title: "Save", type: .normal) { 
             let bookmarkName = alertVC.textFieldText!
             self.addBookmark(with: url, title: bookmarkName)
         }
@@ -523,7 +517,7 @@ extension BrowserVC: WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        print("didCommit")
+
     }
     
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

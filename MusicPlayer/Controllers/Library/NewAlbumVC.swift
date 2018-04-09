@@ -8,21 +8,19 @@
 
 import UIKit
 
-class NewAlbumVC: UIViewController {
+class NewPlaylistVC: UIViewController {
     
     var addedSongs = [Song]()
     
-    fileprivate var albumTitle = ""
-    
-    fileprivate var albumArtist = ""
+    fileprivate var playlistTitle = ""
     
     fileprivate var artworkImage: UIImage?
     
-    weak var delegate: NewAlbumDelegate?
+    weak var delegate: NewPlaylistDelegate?
     
     fileprivate let topBar: ClearTopBar = {
         let topBar = ClearTopBar()
-        topBar.title = "New Album"
+        topBar.title = "New Playlist"
         topBar.setRightButtonFontSize(20)
         topBar.setRightButtonTitle("Done")
         topBar.setRightButtonTitleColor(Colors.red)
@@ -30,7 +28,7 @@ class NewAlbumVC: UIViewController {
         return topBar
     }()
     
-    private let songsView: UICollectionView = {
+    fileprivate let songsView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.sectionInset.bottom = 16
         layout.minimumLineSpacing = 14
@@ -54,7 +52,7 @@ class NewAlbumVC: UIViewController {
     
     fileprivate func setupViews() {
         view.backgroundColor = .white
-    
+        
         view.addSubview(topBar)
         view.insertSubview(songsView, at: 0)
         
@@ -68,7 +66,7 @@ class NewAlbumVC: UIViewController {
         songsView.delegate = self
         songsView.dataSource = self
         songsView.register(NewAlbumSongCell.self, forCellWithReuseIdentifier: NewAlbumSongCell.reuseId)
-        songsView.register(NewAlbumView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: NewAlbumView.reuseId)
+        registerSupplementaryViewClass()
         
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongGesture(_:)))
         songsView.addGestureRecognizer(longPressGesture)
@@ -86,6 +84,10 @@ class NewAlbumVC: UIViewController {
         
         let layout = songsView.collectionViewLayout as! UICollectionViewFlowLayout
         layout.headerReferenceSize = CGSize(width: songsView.frame.width, height: 226)
+    }
+    
+    fileprivate func registerSupplementaryViewClass() {
+        songsView.register(NewPlaylistView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: NewPlaylistView.reuseId)
     }
     
     private func setupKeyboardObserver() {
@@ -118,10 +120,9 @@ class NewAlbumVC: UIViewController {
             songsView.cancelInteractiveMovement()
         }
     }
-
-    private func decideDoneButtonState() {
-        if !albumTitle.trimmingCharacters(in: .whitespaces).isEmpty,
-            !albumArtist.trimmingCharacters(in: .whitespaces).isEmpty,
+    
+    fileprivate func decideDoneButtonState() {
+        if !playlistTitle.trimmingCharacters(in: .whitespaces).isEmpty,
             !addedSongs.isEmpty {
             topBar.enableRightButton()
         } else {
@@ -134,14 +135,13 @@ class NewAlbumVC: UIViewController {
     }
     
     fileprivate func tapDoneButton() {
-        Library.main.addAlbum(with: albumTitle,
-            artist: albumArtist, songs: addedSongs, artwork: artworkImage)
+        Library.main.addPlaylist(with: playlistTitle, songs: addedSongs, artwork: artworkImage)
         dismiss(animated: true)
-        delegate?.addedNewAlbum()
+        delegate?.addedNewPlaylist()
     }
     
     func didTapAddMusicButton() {
-        let addSongsVC = AddSongsVC()
+        let addSongsVC = PlaylistAddSongsVC()
         addSongsVC.delegate = self
         addSongsVC.addedSongs = addedSongs
         addSongsVC.transitioningDelegate = transitionManager
@@ -153,15 +153,19 @@ class NewAlbumVC: UIViewController {
     }
 }
 
-extension NewAlbumVC: NewAlbumViewDelegate {
+extension NewPlaylistVC: NewAlbumSongCellDelegate {
+    
+    func tapRemoveButton(_ cell: NewAlbumSongCell) {
+        guard let indexPath = songsView.indexPath(for: cell) else { return }
+        addedSongs.remove(at: indexPath.item)
+        songsView.deleteItems(at: [indexPath])
+    }
+}
+
+extension NewPlaylistVC: NewPlaylistViewDelegate {
     
     func titleFieldChangedText(_ text: String) {
-        albumTitle = text
-        decideDoneButtonState()
-    }
-    
-    func artistFieldChangedText(_ text: String) {
-        albumArtist = text
+        playlistTitle = text
         decideDoneButtonState()
     }
     
@@ -181,27 +185,21 @@ extension NewAlbumVC: NewAlbumViewDelegate {
     }
     
     private func showArtworkActions() {
-        let actionSheet = ActionSheet()
-        actionSheet.cornerRadius = 12
-        actionSheet.corners = [.topLeft, .topRight]
-        actionSheet.actionCellHeight = Screen.is4inch ? 68 : 70
-        actionSheet.font = UIFont(name: Fonts.general, size: 21)!
-        let cancelAction = Action(title: "Cancel", type: .cancel)
-        let chooseAction = Action(title: "Choose Artwork", type: .normal) { _ in
+        let actionSheet = RoundActionSheet()
+        let chooseAction = Action(title: "Choose Artwork", type: .normal) {
             self.showAddArtworkVC()
         }
-        let removeAction = Action(title: "Remove Artwork", type: .destructive) { _ in
+        let removeAction = Action(title: "Remove Artwork", type: .destructive) { 
             self.artworkImage = nil
             self.songsView.reloadData()
         }
-        actionSheet.addAction(cancelAction)
         actionSheet.addAction(chooseAction)
         actionSheet.addAction(removeAction)
         actionSheet.present()
     }
 }
 
-extension NewAlbumVC: AddSongsDelegate {
+extension NewPlaylistVC: AddSongsDelegate {
     
     func didSelectSongs(_ songs: [Song]) {
         addedSongs = songs
@@ -209,7 +207,7 @@ extension NewAlbumVC: AddSongsDelegate {
     }
 }
 
-extension NewAlbumVC: AddArtworkDelegate {
+extension NewPlaylistVC: AddArtworkDelegate {
     
     func didSelectArtwork(_ image: UIImage) {
         artworkImage = image
@@ -217,16 +215,7 @@ extension NewAlbumVC: AddArtworkDelegate {
     }
 }
 
-extension NewAlbumVC: NewAlbumSongCellDelegate {
-    
-    func tapRemoveButton(_ cell: NewAlbumSongCell) {
-        guard let indexPath = songsView.indexPath(for: cell) else { return }
-        addedSongs.remove(at: indexPath.item)
-        songsView.deleteItems(at: [indexPath])
-    }
-}
-
-extension NewAlbumVC: UICollectionViewDataSource {
+extension NewPlaylistVC: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         decideDoneButtonState()
@@ -241,16 +230,15 @@ extension NewAlbumVC: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        let albumView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: NewAlbumView.reuseId, for: indexPath) as! NewAlbumView
-        albumView.delegate = self
-        albumView.setupTitle(albumTitle)
-        albumView.setupArtist(albumArtist)
-        albumView.setupArtworkImage(artworkImage)
-        return albumView
+        let playlistView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: NewPlaylistView.reuseId, for: indexPath) as! NewPlaylistView
+        playlistView.delegate = self
+        playlistView.setupTitle(playlistTitle)
+        playlistView.setupArtworkImage(artworkImage)
+        return playlistView
     }
 }
 
-extension NewAlbumVC: UICollectionViewDelegateFlowLayout {
+extension NewPlaylistVC: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, canMoveItemAt indexPath: IndexPath) -> Bool {
         return true
@@ -271,10 +259,115 @@ extension NewAlbumVC: UICollectionViewDelegateFlowLayout {
     }
 }
 
+protocol NewPlaylistDelegate: class {
+    
+    func addedNewPlaylist()
+}
+
+
+class NewAlbumVC: NewPlaylistVC {
+    
+    fileprivate var albumArtist = ""
+    
+    weak var newAlbumDelegate: NewAlbumDelegate?
+    
+    override func setupViews() {
+        super.setupViews()
+        topBar.title = "New Album"
+    }
+    
+    override func registerSupplementaryViewClass() {
+        songsView.register(NewAlbumView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: NewAlbumView.reuseId)
+    }
+    
+    override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        let albumView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: NewAlbumView.reuseId, for: indexPath) as! NewAlbumView
+        albumView.delegate = self
+        albumView.setupTitle(playlistTitle)
+        albumView.setupArtist(albumArtist)
+        albumView.setupArtworkImage(artworkImage)
+        return albumView
+    }
+
+    override func tapDoneButton() {
+        Library.main.addAlbum(with: playlistTitle,
+            artist: albumArtist, songs: addedSongs, artwork: artworkImage)
+        dismiss(animated: true)
+        newAlbumDelegate?.addedNewAlbum()
+    }
+    
+    override func decideDoneButtonState() {
+        if !playlistTitle.trimmingCharacters(in: .whitespaces).isEmpty,
+            !albumArtist.trimmingCharacters(in: .whitespaces).isEmpty,
+            !addedSongs.isEmpty {
+            topBar.enableRightButton()
+        } else {
+            topBar.disableRightButton()
+        }
+    }
+    
+    override func didTapAddMusicButton() {
+        let addSongsVC = AlbumAddSongsVC()
+        addSongsVC.delegate = self
+        addSongsVC.addedSongs = addedSongs
+        addSongsVC.transitioningDelegate = transitionManager
+        present(addSongsVC, animated: true)
+    }
+}
+
+extension NewAlbumVC: NewAlbumViewDelegate {
+    
+    func artistFieldChangedText(_ text: String) {
+        albumArtist = text
+        decideDoneButtonState()
+    }
+}
+
 protocol NewAlbumDelegate: class {
     
     func addedNewAlbum()
 }
+
+
+final class EditPlaylistVC: NewPlaylistVC {
+    
+    var playlist: Playlist!
+    
+    weak var editPlaylistDelegate: EditPlaylistDelegate?
+    
+    override func setupViews() {
+        super.setupViews()
+        playlistTitle = playlist.title
+        artworkImage = playlist.artwork
+        topBar.title = "Edit Playlist"
+    }
+    
+    override func didTapAddMusicButton() {
+        let addSongsVC = PlaylistAddSongsVC()
+        addSongsVC.playlist = playlist
+        addSongsVC.delegate = self
+        addSongsVC.addedSongs = addedSongs
+        addSongsVC.transitioningDelegate = transitionManager
+        present(addSongsVC, animated: true)
+    }
+    
+    override func tapDoneButton() {
+        Library.main.editPlaylist(playlist, with: playlistTitle,
+            songs: addedSongs, artwork: artworkImage)
+        editPlaylistDelegate?.editedPlaylist()
+    }
+    
+    override func tapCloseButton() {
+        editPlaylistDelegate?.tappedCloseButton()
+    }
+}
+
+protocol EditPlaylistDelegate: class {
+    
+    func editedPlaylist()
+    func tappedCloseButton()
+}
+
 
 final class EditAlbumVC: NewAlbumVC {
     
@@ -284,14 +377,14 @@ final class EditAlbumVC: NewAlbumVC {
     
     override func setupViews() {
         super.setupViews()
-        albumTitle = album.title
+        playlistTitle = album.title
         albumArtist = album.artist
         artworkImage = album.artwork
         topBar.title = "Edit Album"
     }
     
     override func didTapAddMusicButton() {
-        let addSongsVC = AddSongsVC()
+        let addSongsVC = AlbumAddSongsVC()
         addSongsVC.album = album
         addSongsVC.delegate = self
         addSongsVC.addedSongs = addedSongs
@@ -300,7 +393,7 @@ final class EditAlbumVC: NewAlbumVC {
     }
     
     override func tapDoneButton() {
-        Library.main.editAlbum(album, with: albumTitle,
+        Library.main.editAlbum(album, with: playlistTitle,
             artist: albumArtist, songs: addedSongs, artwork: artworkImage)
         editAlbumDelegate?.editedAlbum()
     }

@@ -108,21 +108,15 @@ extension BookmarksVC: BookmarkCellDelegate {
     }
     
     private func showActions(for bookmark: Bookmark, at indexPath: IndexPath) {
-        let actionSheet = ActionSheet()
-        actionSheet.cornerRadius = 12
-        actionSheet.corners = [.topLeft, .topRight]
-        actionSheet.actionCellHeight = Screen.is4inch ? 68 : 70
-        actionSheet.font = UIFont(name: Fonts.general, size: 21)!
-        let cancelAction = Action(title: "Cancel", type: .cancel)
-        let removeAction = Action(title: "Remove", type: .destructive) { _ in
+        let actionSheet = RoundActionSheet()
+        let removeAction = Action(title: "Remove", type: .destructive) {
             self.removeBookmark(at: indexPath)
         }
-        let renameAction = Action(title: "Rename", type: .normal) { _ in
+        let renameAction = Action(title: "Rename", type: .normal) {
             self.showAlertViewForRenameBookmark(bookmark, at: indexPath)
         }
         actionSheet.addAction(renameAction)
         actionSheet.addAction(removeAction)
-        actionSheet.addAction(cancelAction)
         actionSheet.present()
     }
     
@@ -147,7 +141,7 @@ extension BookmarksVC: BookmarkCellDelegate {
         alertVC.textFieldText = bookmark.title
         alertVC.font = UIFont(name: Fonts.general, size: 21)!
         let cancelAction = Action(title: "Cancel", type: .cancel)
-        let renameAction = Action(title: "Save", type: .normal) { _ in
+        let renameAction = Action(title: "Save", type: .normal) { 
             let bookmarkName = alertVC.textFieldText!
             self.renameBookmark(with: bookmarkName, at: indexPath)
         }

@@ -13,13 +13,15 @@ class PlaylistCell: UICollectionViewCell {
     fileprivate let titleLabel: UILabel = {
         let label = UILabel()
         label.frame.size.height = 22
-        label.font = UIFont(name: Fonts.general, size: 17)
+        label.font = UIFont(name: Fonts.general, size: 18)
         return label
     }()
     
-    private let artworkView = ArtworkView()
+    fileprivate let artworkView = ArtworkView()
     
-    static let reuseId = "PlaylistCell"
+    class var reuseId: String {
+        return "PlaylistCell"
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -40,7 +42,7 @@ class PlaylistCell: UICollectionViewCell {
         artworkView.frame.size = CGSize(width: frame.width, height: frame.width)
         
         titleLabel.frame.origin.x = 3
-        titleLabel.frame.origin.y = artworkView.frame.maxY + 10
+        titleLabel.frame.origin.y = artworkView.frame.maxY + 14
         titleLabel.frame.size.width = frame.width
     }
     
@@ -62,9 +64,9 @@ class PlaylistCell: UICollectionViewCell {
     }
 }
 
-final class AlbumCell: PlaylistCell {
+class AlbumCell: PlaylistCell {
     
-    private let artistLabel: UILabel = {
+    fileprivate let artistLabel: UILabel = {
         let label = UILabel()
         label.frame.size.height = 22
         label.font = UIFont(name: Fonts.general, size: 17)
@@ -75,11 +77,13 @@ final class AlbumCell: PlaylistCell {
     override func setupViews() {
         super.setupViews()
         contentView.addSubview(artistLabel)
+        titleLabel.font = UIFont(name: Fonts.general, size: 17)
     }
     
     override func layoutViews() {
         super.layoutViews()
         artistLabel.frame.origin.x = 3
+        titleLabel.frame.origin.y = artworkView.frame.maxY + 10
         artistLabel.frame.origin.y = titleLabel.frame.maxY
         artistLabel.frame.size.width = frame.width
     }
@@ -89,74 +93,92 @@ final class AlbumCell: PlaylistCell {
     }
 }
 
-final class AlbumCell2: UICollectionViewCell {
+final class AlbumMiniCell: AlbumCell {
     
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.frame.size.height = 22
-        label.font = UIFont(name: Fonts.general, size: 17)
-        return label
-    }()
-    
-    private let artistLabel: UILabel = {
-        let label = UILabel()
-        label.frame.size.height = 22
-        label.font = UIFont(name: Fonts.general, size: 17)
-        label.textColor = UIColor(hex: "9B9B9B")
-        return label
-    }()
-    
-    private let artworkView = ArtworkView()
-    
-    static let reuseId = "AlbumCell"
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupViews()
+    override class var reuseId: String {
+        return "AlbumMiniCell"
     }
     
-    private func setupViews() {
+    override func setupViews() {
+        super.setupViews()
         backgroundColor = .clear
-        contentView.backgroundColor = .clear
+        contentView.backgroundColor = .white
         
-        contentView.addSubview(titleLabel)
-        contentView.addSubview(artistLabel)
-        contentView.addSubview(artworkView)
+        artworkView.showShadow = false
         
-        layoutViews()
-    }
-    
-    private func layoutViews() {
-        artworkView.frame.origin = .zero
-        artworkView.frame.size = CGSize(width: frame.width, height: frame.width)
+        contentView.layer.cornerRadius = 12
+        contentView.clipsToBounds = true
         
-        titleLabel.frame.origin.x = 3
-        titleLabel.frame.origin.y = artworkView.frame.maxY + 10
-        titleLabel.frame.size.width = frame.width
+        titleLabel.font = UIFont(name: Fonts.general, size: 19)
+        artistLabel.font = UIFont(name: Fonts.general, size: 18)
         
-        artistLabel.frame.origin.x = 3
-        artistLabel.frame.origin.y = titleLabel.frame.maxY
-        artistLabel.frame.size.width = frame.width
+        setupShadow()
     }
     
-    func setTitle(_ title: String) {
-        titleLabel.text = title
+    override func layoutViews() {
+        let artworkInset: CGFloat = 12
+        let artworkHeight = frame.height - 2*artworkInset
+        artworkView.frame.origin.x = artworkInset
+        artworkView.frame.size = CGSize(width: artworkHeight, height: artworkHeight)
+        artworkView.center.y = frame.height/2
+        
+        titleLabel.frame.origin.x = artworkView.frame.maxX + 16
+        titleLabel.frame.size.width = frame.width - titleLabel.frame.minX - 10
+        titleLabel.center.y = frame.height/2 - 14
+        
+        artistLabel.frame.origin.x = titleLabel.frame.origin.x
+        artistLabel.frame.size.width = titleLabel.frame.width
+        artistLabel.center.y = frame.height/2 + 14
     }
     
-    func setArtist(_ artist: String) {
-        artistLabel.text = artist
-    }
-    
-    func setArtwork(_ artwork: UIImage?) {
-        artworkView.setArtwork(artwork)
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        artworkView.removeArtwork()
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    private func setupShadow() {
+        layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 12).cgPath
+        layer.shadowOpacity = 0.08  //0.12 0.08
+        layer.shadowOffset = .zero
+        layer.shadowColor = UIColor(hex: "D0021B").cgColor //UIColor.gray.cgColor
+        layer.shadowRadius = 15
     }
 }
+
+final class PlaylistMiniCell: PlaylistCell {
+    
+    override class var reuseId: String {
+        return "PlaylistMiniCell"
+    }
+    
+    override func setupViews() {
+        super.setupViews()
+        backgroundColor = .clear
+        contentView.backgroundColor = .white
+        
+        artworkView.showShadow = false
+        
+        contentView.layer.cornerRadius = 12
+        contentView.clipsToBounds = true
+        
+        titleLabel.font = UIFont(name: Fonts.general, size: 20)
+        
+        setupShadow()
+    }
+    
+    override func layoutViews() {
+        let artworkInset: CGFloat = 12
+        let artworkHeight = frame.height - 2*artworkInset
+        artworkView.frame.origin.x = artworkInset
+        artworkView.frame.size = CGSize(width: artworkHeight, height: artworkHeight)
+        artworkView.center.y = frame.height/2
+        
+        titleLabel.frame.origin.x = artworkView.frame.maxX + 16
+        titleLabel.frame.size.width = frame.width - titleLabel.frame.minX - 10
+        titleLabel.center.y = frame.height/2
+    }
+    
+    private func setupShadow() {
+        layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 12).cgPath
+        layer.shadowOpacity = 0.08  //0.12 0.08
+        layer.shadowOffset = .zero
+        layer.shadowColor = UIColor(hex: "D0021B").cgColor //UIColor.gray.cgColor
+        layer.shadowRadius = 15
+    }
+}
+

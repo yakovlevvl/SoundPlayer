@@ -67,12 +67,6 @@ class BaseSongCell: UICollectionViewCell {
     
     func setup(for song: Song) {
         titleLabel.text = song.title
-//        if flag == 1 {
-//            artwork.frame.origin.x = 16
-//            titleLabel.frame.origin.x = artwork.frame.maxX + 16
-//            artwork.contentMode = .scaleAspectFit
-//            artwork.image = UIImage(named: "ExampleArtwork")!
-//        }
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -156,11 +150,19 @@ protocol NewAlbumSongCellDelegate: class {
     func tapRemoveButton(_ cell: NewAlbumSongCell)
 }
 
-final class AddSongCell: BaseSongCell {
+
+
+
+protocol AddSongCellDelegate: class {
+    
+    func tapAddButton(_ cell: AddSongCell)
+}
+
+class AddSongCell: BaseSongCell {
     
     weak var delegate: AddSongCellDelegate?
     
-    private let addButton: UIButton = {
+    fileprivate let addButton: UIButton = {
         let button = UIButton(type: .custom)
         button.frame.size = CGSize(width: 46, height: 46)
         button.setImage(UIImage(named: "PlusIcon"), for: .normal)
@@ -185,19 +187,45 @@ final class AddSongCell: BaseSongCell {
         titleLabel.frame.size.width = addButton.frame.minX - titleLabel.frame.minX + 1
     }
     
-    func setup(for song: Song, isAdded: Bool) {
-        titleLabel.text = song.title
-        addButton.tintColor = isAdded ? .black : UIColor(hex: "D0021B")
-        addButton.setImage(UIImage(named: isAdded ? "Checkmark" : "PlusIcon"), for: .normal)
-    }
-    
     @objc private func tapAddButton() {
         delegate?.tapAddButton(self)
     }
 }
 
-protocol AddSongCellDelegate: class {
+final class AlbumAddSongCell: AddSongCell {
     
-    func tapAddButton(_ cell: AddSongCell)
+    func setup(for song: Song, isAdded: Bool) {
+        titleLabel.text = song.title
+        addButton.tintColor = isAdded ? .black : UIColor(hex: "D0021B")
+        addButton.setImage(UIImage(named: isAdded ? "Checkmark" : "PlusIcon"), for: .normal)
+    }
+}
+
+final class PlaylistAddSongCell: AddSongCell {
+    
+    private let countLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.frame.size = CGSize(width: 40, height: 28)
+        label.font = UIFont(name: Fonts.general, size: 20)
+        return label
+    }()
+    
+    override func setupViews() {
+        super.setupViews()
+        contentView.addSubview(countLabel)
+    }
+    
+    override func layoutViews() {
+        super.layoutViews()
+        countLabel.center = addButton.center
+    }
+
+    func setup(for song: Song, addedCount: Int) {
+        titleLabel.text = song.title
+        addButton.isHidden = addedCount != 0
+        countLabel.isHidden = addedCount == 0
+        countLabel.text = "\(addedCount)"
+    }
 }
 

@@ -42,7 +42,7 @@ final class SongsVC: UIViewController {
         return view
     }()
     
-    private let transitionManager = VerticalTransitionManager()
+    let transitionManager = VerticalTransitionManager()
     
     private let topInset: CGFloat = 70
     
@@ -86,21 +86,15 @@ final class SongsVC: UIViewController {
     }
     
     @objc private func tapSortButton() {
-        let actionSheet = ActionSheet()
-        actionSheet.cornerRadius = 12
-        actionSheet.corners = [.topLeft, .topRight]
-        actionSheet.actionCellHeight = Screen.is4inch ? 68 : 70
-        actionSheet.font = UIFont(name: Fonts.general, size: 21)!
-        let cancelAction = Action(title: "Cancel", type: .cancel)
-        let titleAction = Action(title: "Title", type: .normal) { _ in
+        let actionSheet = RoundActionSheet()
+        let titleAction = Action(title: "Title", type: .normal) {
             self.setupSortMethod(.title)
         }
-        let dateAction = Action(title: "Creation Date", type: .normal) { _ in
+        let dateAction = Action(title: "Creation Date", type: .normal) {
             self.setupSortMethod(.creationDate)
         }
         actionSheet.addAction(titleAction)
         actionSheet.addAction(dateAction)
-        actionSheet.addAction(cancelAction)
         actionSheet.present()
     }
     
@@ -119,6 +113,10 @@ final class SongsVC: UIViewController {
         libraryVC.updateAlbumsView()
     }
     
+    private func updatePlaylistsView() {
+        let libraryVC = parent as! LibraryVC
+        libraryVC.updatePlaylistsView()
+    }
     
 }
 
@@ -129,77 +127,6 @@ extension SongsVC: SongCellDelegate {
         library.song(for: indexPath.item) { song in
             self.showActions(for: song, at: indexPath)
         }
-    }
-    
-    private func showActions(for song: Song, at indexPath: IndexPath) {
-        let actionSheet = ActionSheet()
-        actionSheet.cornerRadius = 12
-        actionSheet.corners = [.topLeft, .topRight]
-        actionSheet.actionCellHeight = Screen.is4inch ? 68 : 70
-        actionSheet.font = UIFont(name: Fonts.general, size: 21)!
-        let cancelAction = Action(title: "Cancel", type: .cancel)
-        let renameAction = Action(title: "Rename", type: .normal) { _ in
-            self.showAlertViewForRenameSong(song, at: indexPath)
-        }
-        let addToAlbumAction = Action(title: "Add to Album", type: .normal) { _ in
-            self.selectAlbum(for: song)
-        }
-        let addToPlaylistAction = Action(title: "Add to Playlist", type: .normal) { _ in
-            
-        }
-        let removeAction = Action(title: "Delete from Library", type: .destructive) { _ in
-            self.removeSong(song, at: indexPath)
-        }
-        actionSheet.addAction(renameAction)
-        if song.album == nil {
-            actionSheet.addAction(addToAlbumAction)
-        }
-        actionSheet.addAction(addToPlaylistAction)
-        actionSheet.addAction(removeAction)
-        actionSheet.addAction(cancelAction)
-        actionSheet.present()
-    }
-    
-    private func renameSong(with name: String, at indexPath: IndexPath) {
-        library.renameSong(with: indexPath.item, with: name) {
-            self.songsView.reloadItems(at: [indexPath])
-        }
-    }
-    
-    private func removeSong(_ song: Song, at indexPath: IndexPath) {
-        if let album = song.album, album.songs.count == 1 {
-            library.removeAlbum(album) {
-                self.updateAlbumsView()
-            }
-        }
-        library.removeSong(with: indexPath.item) {
-            self.songsView.deleteItems(at: [indexPath])
-        }
-    }
-    
-    private func selectAlbum(for song: Song) {
-        let selectAlbumVC = SelectAlbumVC()
-        selectAlbumVC.song = song
-        selectAlbumVC.transitioningDelegate = transitionManager
-        present(selectAlbumVC, animated: true)
-    }
-    
-    private func showAlertViewForRenameSong(_ song: Song, at indexPath: IndexPath) {
-        let alertVC = AlertController(message: "Rename Song")
-        alertVC.includeTextField = true
-        alertVC.allowEmptyTextField = false
-        alertVC.showClearButton = true
-        alertVC.textFieldPlaceholder = "Name"
-        alertVC.textFieldText = song.title
-        alertVC.font = UIFont(name: Fonts.general, size: 21)!
-        let cancelAction = Action(title: "Cancel", type: .cancel)
-        let renameAction = Action(title: "Save", type: .normal) { _ in
-            let songName = alertVC.textFieldText!
-            self.renameSong(with: songName, at: indexPath)
-        }
-        alertVC.addAction(cancelAction)
-        alertVC.addAction(renameAction)
-        alertVC.present()
     }
 }
 
@@ -224,7 +151,6 @@ extension SongsVC: UICollectionViewDataSource {
         }
         return cell
     }
-    
 }
 
 extension SongsVC: UICollectionViewDelegateFlowLayout {
@@ -243,6 +169,34 @@ extension SongsVC: UICollectionViewDelegateFlowLayout {
             sortButton.isHidden = false
             UIView.animate(0.22) {
                 self.sortButton.alpha = 1
+            }
+        }
+    }
+}
+
+extension SongsVC: SongActions {
+    
+    func renameSong(_ song: Song, with name: String, at indexPath: IndexPath) {
+        library.renameSong(with: indexPath.item, with: name) {
+            self.songsView.reloadItems(at: [indexPath])
+        }
+    }
+    
+    func removeSong(_ song: Song, at indexPath: IndexPath) {
+        if let album = song.album, album.songs.count == 1 {
+            library.removeAlbum(album) {
+                self.updateAlbumsView()
+            }
+        }
+        let checkPlaylists = !song.playlists.isEmpty
+        library.removeSong(with: indexPath.item) {
+            self.songsView.deleteItems(at: [indexPath])
+            if checkPlaylists {
+                self.library.removeEmptyPlaylists { removed in
+                    if removed {
+                        self.updatePlaylistsView()
+                    }
+                }
             }
         }
     }

@@ -32,6 +32,11 @@ final class LibraryTopBar: UIView {
         super.init(frame: frame)
         setupViews()
     }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layoutViews()
+    }
 
     private func setupViews() {
         backgroundColor = .clear
@@ -50,11 +55,6 @@ final class LibraryTopBar: UIView {
         
         searchButton.center.y = y
         searchButton.frame.origin.x = frame.width - searchButton.frame.width - 24
-    }
-    
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        layoutViews()
     }
     
     @objc private func tapSearchButton() {

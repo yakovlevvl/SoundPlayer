@@ -36,6 +36,8 @@ final class LibraryVC: UIViewController {
     
     private let transitionManager = BrowserTransitionManager()
     
+    private var searchPresenter: FadeChildControllerPresenter!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupViews()
@@ -45,6 +47,7 @@ final class LibraryVC: UIViewController {
         view.backgroundColor = .white
         
         view.addSubview(topBar)
+        topBar.delegate = self
         
         menuBar.delegate = self
         addChildController(menuBar)
@@ -53,6 +56,7 @@ final class LibraryVC: UIViewController {
         view.addSubview(controllersView)
         
         albumsVC.delegate = self
+        playlistsVC.delegate = self
         
         for controller in controllers {
             let containerView = UIView()
@@ -133,6 +137,28 @@ extension LibraryVC: LibraryMenuBarDelegate {
     }
 }
 
+extension LibraryVC: LibraryTopBarDelegate {
+    
+    func tapSearchButton() {
+        let searchVC = SearchVC()
+        searchVC.delegate = self
+        searchPresenter = FadeChildControllerPresenter(parentController: self)
+        searchPresenter.duration = 0.13
+        searchPresenter.present(searchVC)
+    }
+}
+
+extension LibraryVC: SearchDelegate {
+    
+    func didSelectSong(_ song: Song) {
+        
+    }
+    
+    func tapCancelButton() {
+        searchPresenter.dismiss()
+    }
+}
+
 extension LibraryVC: AlbumsDelegate {
     
     func didSelectAlbum(_ album: Album) {
@@ -140,9 +166,29 @@ extension LibraryVC: AlbumsDelegate {
         albumVC.album = album
         navigationController?.pushViewController(albumVC, animated: true)
     }
+}
+
+extension LibraryVC: PlaylistsDelegate {
+    
+    func didSelectPlaylist(_ playlist: Playlist) {
+        let playlistVC = PlaylistVC()
+        playlistVC.playlist = playlist
+        navigationController?.pushViewController(playlistVC, animated: true)
+    }
+}
+
+extension LibraryVC {
+    
+    func updateSongsView() {
+        songsVC.updateSongsView()
+    }
     
     func updateAlbumsView() {
         albumsVC.updateAlbumsView()
+    }
+    
+    func updatePlaylistsView() {
+        playlistsVC.updatePlaylistsView()
     }
 }
 

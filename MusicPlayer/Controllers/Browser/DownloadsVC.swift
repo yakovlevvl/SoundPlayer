@@ -118,7 +118,7 @@ extension DownloadsVC {
         let alertVC = AlertController(message: "Clear finished downloads ?")
         alertVC.font = UIFont(name: Fonts.general, size: 21)!
         let cancelAction = Action(title: "Cancel", type: .cancel)
-        let clearAction = Action(title: "Clear", type: .destructive) { _ in
+        let clearAction = Action(title: "Clear", type: .destructive) {
             self.clearFinishedDownloads()
         }
         alertVC.addAction(clearAction)
@@ -237,21 +237,15 @@ extension DownloadsVC: UICollectionViewDelegateFlowLayout {
     }
     
     private func showActionsForFailedDownload(_ download: SongDownload, at indexPath: IndexPath) {
-        let actionSheet = ActionSheet()
-        actionSheet.cornerRadius = 12
-        actionSheet.corners = [.topLeft, .topRight]
-        actionSheet.actionCellHeight = Screen.is4inch ? 68 : 70
-        actionSheet.font = UIFont(name: Fonts.general, size: 21)!
-        let cancelAction = Action(title: "Cancel", type: .cancel)
-        let reloadAction = Action(title: "Try again", type: .normal) { _ in
+        let actionSheet = RoundActionSheet()
+        let reloadAction = Action(title: "Try again", type: .normal) {
             self.resumeDownload(download)
         }
-        let removeAction = Action(title: "Remove", type: .destructive) { _ in
+        let removeAction = Action(title: "Remove", type: .destructive) {
             self.removeDownload(at: indexPath)
         }
         actionSheet.addAction(reloadAction)
         actionSheet.addAction(removeAction)
-        actionSheet.addAction(cancelAction)
         actionSheet.present()
     }
     

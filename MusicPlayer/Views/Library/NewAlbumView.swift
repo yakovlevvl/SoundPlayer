@@ -8,9 +8,9 @@
 
 import UIKit
 
-final class NewAlbumView: UICollectionReusableView {
+class NewPlaylistView: UICollectionReusableView {
     
-    weak var delegate: NewAlbumViewDelegate?
+    weak var delegate: NewPlaylistViewDelegate?
     
     private let artworkView: ArtworkView = {
         let imageView = ArtworkView()
@@ -18,23 +18,10 @@ final class NewAlbumView: UICollectionReusableView {
         return imageView
     }()
     
-    private let titleField: UITextField = {
+    fileprivate let titleField: UITextField = {
         let textField = UITextField()
         textField.frame.size.height = 26
         textField.placeholder = "Title"
-        textField.borderStyle = .none
-        textField.minimumFontSize = 19
-        textField.returnKeyType = .done
-        textField.autocorrectionType = .no
-        textField.adjustsFontSizeToFitWidth = true
-        textField.font = UIFont(name: Fonts.general, size: 20)
-        return textField
-    }()
-    
-    private let artistField: UITextField = {
-        let textField = UITextField()
-        textField.frame.size.height = 26
-        textField.placeholder = "Artist"
         textField.borderStyle = .none
         textField.minimumFontSize = 19
         textField.returnKeyType = .done
@@ -74,18 +61,18 @@ final class NewAlbumView: UICollectionReusableView {
         return button
     }()
     
-    static let reuseId = "NewAlbumView"
+    static let reuseId = "NewPlaylistView"
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
+        layoutViews()
     }
     
-    private func setupViews() {
+    fileprivate func setupViews() {
         backgroundColor = .clear
         
         addSubview(titleField)
-        addSubview(artistField)
         addSubview(artworkView)
         
         addSubview(plusButton)
@@ -96,25 +83,16 @@ final class NewAlbumView: UICollectionReusableView {
         addMusicButton.addTarget(self, action: #selector(tapAddMusicButton), for: .touchUpInside)
         addArtworkButton.addTarget(self, action: #selector(tapAddArtworkButton), for: .touchUpInside)
         
+        titleField.addTarget(self, action: #selector(titleFieldChangedText), for: .editingChanged)
         titleField.addTarget(titleField, action: #selector(resignFirstResponder), for: .editingDidEndOnExit)
-        artistField.addTarget(artistField, action: #selector(resignFirstResponder), for: .editingDidEndOnExit)
-        
-        titleField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
-        artistField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
-        
-        layoutViews()
     }
     
-    private func layoutViews() {
+    fileprivate func layoutViews() {
         artworkView.frame.origin = CGPoint(x: 20, y: 2)
         
         titleField.frame.origin.y = artworkView.frame.minY + 8
         titleField.frame.origin.x = artworkView.frame.maxX + 20
         titleField.frame.size.width = frame.width - titleField.frame.minX - 20
-        
-        artistField.frame.origin.x = titleField.frame.origin.x
-        artistField.frame.origin.y = titleField.frame.maxY + 18
-        artistField.frame.size.width = titleField.frame.width
         
         plusButton.frame.origin = CGPoint(x: 32, y: artworkView.frame.maxY + 30)
         addMusicButton.frame.origin.x = plusButton.frame.maxX + 10
@@ -123,21 +101,24 @@ final class NewAlbumView: UICollectionReusableView {
         addArtworkButton.center = CGPoint(x: artworkView.frame.maxX - 12, y: artworkView.frame.maxY - 12)
     }
     
-    @objc private func textFieldDidChange(_ textField: UITextField) {
-        if textField == titleField {
-            delegate?.titleFieldChangedText(textField.text!)
-        }
-        if textField == artistField {
-            delegate?.artistFieldChangedText(textField.text!)
-        }
+    @objc fileprivate func titleFieldChangedText() {
+        delegate?.titleFieldChangedText(titleField.text!)
     }
     
-    @objc private func tapAddMusicButton() {
+    @objc fileprivate func tapAddArtworkButton() {
+        delegate?.didTapAddArtworkButton()
+    }
+    
+    @objc fileprivate func tapAddMusicButton() {
         delegate?.didTapAddMusicButton()
     }
     
-    @objc private func tapAddArtworkButton() {
-        delegate?.didTapAddArtworkButton()
+    func setupTitle(_ title: String) {
+        titleField.text = title
+    }
+    
+    func setupArtworkImage(_ image: UIImage?) {
+        artworkView.setArtwork(image)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -145,25 +126,53 @@ final class NewAlbumView: UICollectionReusableView {
     }
 }
 
-extension NewAlbumView {
+protocol NewPlaylistViewDelegate: class {
     
-    func setupTitle(_ title: String) {
-        titleField.text = title
+    func didTapAddMusicButton()
+    func didTapAddArtworkButton()
+    func titleFieldChangedText(_ text: String)
+}
+
+final class NewAlbumView: NewPlaylistView {
+    
+    private let artistField: UITextField = {
+        let textField = UITextField()
+        textField.frame.size.height = 26
+        textField.placeholder = "Artist"
+        textField.borderStyle = .none
+        textField.minimumFontSize = 19
+        textField.returnKeyType = .done
+        textField.autocorrectionType = .no
+        textField.adjustsFontSizeToFitWidth = true
+        textField.font = UIFont(name: Fonts.general, size: 20)
+        return textField
+    }()
+    
+    override func setupViews() {
+        super.setupViews()
+        addSubview(artistField)
+        artistField.addTarget(self, action: #selector(artistFieldChangedText), for: .editingChanged)
+        artistField.addTarget(artistField, action: #selector(resignFirstResponder), for: .editingDidEndOnExit)
+    }
+    
+    override func layoutViews() {
+        super.layoutViews()
+        artistField.frame.origin.x = titleField.frame.origin.x
+        artistField.frame.origin.y = titleField.frame.maxY + 18
+        artistField.frame.size.width = titleField.frame.width
+    }
+    
+    @objc fileprivate func artistFieldChangedText() {
+        (delegate as? NewAlbumViewDelegate)?.artistFieldChangedText(artistField.text!)
     }
     
     func setupArtist(_ artist: String) {
         artistField.text = artist
     }
-    
-    func setupArtworkImage(_ image: UIImage?) {
-        artworkView.setArtwork(image)
-    }
 }
 
-protocol NewAlbumViewDelegate: class {
+protocol NewAlbumViewDelegate: NewPlaylistViewDelegate {
     
-    func didTapAddMusicButton()
-    func didTapAddArtworkButton()
-    func titleFieldChangedText(_ text: String)
     func artistFieldChangedText(_ text: String)
 }
+
