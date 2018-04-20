@@ -12,7 +12,7 @@ final class SettingsVC: UIViewController {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Library"
+        label.text = "Settings"
         label.frame.size = CGSize(width: 120, height: 34)
         label.font = UIFont(name: Fonts.general, size: 30)
         return label
@@ -35,6 +35,9 @@ final class SettingsVC: UIViewController {
     }
     
     private func layoutViews() {
+        
+        titleLabel.frame.origin.x = 30
+        titleLabel.frame.origin.y = 30
         
 //        searchBar.frame.origin = .zero
 //        searchBar.frame.size = CGSize(width: view.frame.width, height: 80)

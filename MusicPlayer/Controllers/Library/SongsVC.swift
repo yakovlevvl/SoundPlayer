@@ -61,6 +61,11 @@ final class SongsVC: UIViewController {
         songsView.reloadData()
     }
     
+//    override func viewDidAppear(_ animated: Bool) {
+//        super.viewDidAppear(animated)
+//        updateSongsView()
+//    }
+    
     private func setupViews() {
         view.backgroundColor = .white
         
@@ -157,7 +162,8 @@ extension SongsVC: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         library.song(for: indexPath.item) { song in
-            // play song
+            self.player.playSong(song)
+            self.player.songsList = self.library.allSongs
         }
     }
     

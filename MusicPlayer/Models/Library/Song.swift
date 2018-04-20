@@ -7,7 +7,7 @@
 //
 
 import RealmSwift
-
+////// when remove song first remove file
 class Song: Object {
     
     @objc dynamic var title = ""

@@ -183,6 +183,11 @@ final class PlaylistVC: CompilationVC {
         return playlistView
     }
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let song = playlist.songs[indexPath.item]
+        player.playSong(song)
+        player.songsList = Array(playlist.songs)
+    }
 }
 
 extension PlaylistVC: EditPlaylistDelegate {
@@ -237,11 +242,11 @@ extension PlaylistVC: PlaylistViewDelegate {
     }
     
     func tapPlayButton() {
-        
+        player.playSongsList(Array(playlist.songs))
     }
     
     func tapShuffleButton() {
-        
+        player.shuffleAndPlaySongsList(Array(playlist.songs))
     }
 }
 
@@ -299,6 +304,11 @@ final class AlbumVC: CompilationVC {
         return albumView
     }
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let song = album.songs[indexPath.item]
+        player.playSong(song)
+        player.songsList = Array(album.songs)
+    }
 }
 
 extension AlbumVC: EditAlbumDelegate {
@@ -383,11 +393,11 @@ extension AlbumVC: AlbumViewDelegate {
     }
     
     func tapPlayButton() {
-        
+        player.playSongsList(Array(album.songs))
     }
     
     func tapShuffleButton() {
-        
+        player.shuffleAndPlaySongsList(Array(album.songs))
     }
 }
 

@@ -21,6 +21,8 @@ final class ArtworkView: UIView {
     
     var showShadow = true
     
+    var cornerRadius: CGFloat = 6
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -38,6 +40,7 @@ final class ArtworkView: UIView {
     
     private func layoutViews() {
         imageView.frame = bounds
+        imageView.layer.cornerRadius = cornerRadius
         if showShadow {
             setupShadow()
         }
@@ -53,13 +56,17 @@ final class ArtworkView: UIView {
     }
     
     func setArtwork(_ image: UIImage?) {
-        imageView.contentMode = image == nil ? .center : .scaleAspectFill
-        imageView.image = image ?? UIImage(named: "AlbumIcon")
+        if image == nil {
+            setDefaultArtwork()
+        } else {
+            imageView.image = image
+            imageView.contentMode = .scaleAspectFill
+        }
     }
     
     func setDefaultArtwork() {
         imageView.contentMode = .center
-        imageView.image = UIImage(named: "AlbumIcon")
+        imageView.image = UIImage(named: frame.width > 70 ? "AlbumIcon" : "AlbumMiniIcon")
     }
     
     func removeArtwork() {

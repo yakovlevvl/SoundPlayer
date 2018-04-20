@@ -8,6 +8,7 @@
 
 import UIKit
 import Photos
+import GameplayKit.GKRandomSource
 
 enum Fonts {
     
@@ -25,7 +26,9 @@ enum Colors {
     static let clearDarkWhite = UIColor(r: 250, g: 250, b: 250, a: 0.98)
     static let clearWhite = UIColor(r: 255, g: 255, b: 255, a: 0.98)
     static let red = UIColor(hex: "D0021B")
+    static let clearRed = UIColor(hex: "D0021B", alpha: 0.3)
     static let roundButtonColor = UIColor(hex: "D82C41")
+    static let gray = UIColor(r: 236, g: 236, b: 236)
 }
 
 enum UserDefaultsKeys {
@@ -33,6 +36,11 @@ enum UserDefaultsKeys {
     static let songsSortMethod = "songsSortMethod"
     static let albumsSortMethod = "albumsSortMethod"
     static let playlistsSortMethod = "playlistsSortMethod"
+}
+
+enum PlayerBarProperties {
+    
+    static let barHeight: CGFloat = 68
 }
 
 extension UIColor {
@@ -173,6 +181,27 @@ extension FileManager {
             index += 1
         }
         return url
+    }
+}
+
+extension Array where Element: Hashable {
+    
+    func next(item: Element) -> Element? {
+        if let index = index(of: item), index + 1 < count {
+            return self[index + 1]
+        }
+        return nil
+    }
+    
+    func prev(item: Element) -> Element? {
+        if let index = index(of: item), index > 0 {
+            return self[index - 1]
+        }
+        return nil
+    }
+    
+    func shuffled() -> [Element] {
+        return GKRandomSource.sharedRandom().arrayByShufflingObjects(in: self) as! [Element]
     }
 }
 
