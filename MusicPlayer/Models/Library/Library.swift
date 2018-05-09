@@ -66,17 +66,15 @@ class Library {
         }
     }
     
-    func addSong(with location: URL, title: String, completion: @escaping () -> ()) {
-        libraryQueue.async {
-            let song = Song(title: title, url: location)
-            let realm = try! Realm()
-            try! realm.write {
-                realm.add(song)
-            }
-            DispatchQueue.main.async {
-                try! Realm().refresh()
-                completion()
-            }
+    func addSong(with location: URL, title: String, completion: @escaping (Song) -> ()) {
+        let song = Song(title: title, url: location)
+        let realm = try! Realm()
+        try! realm.write {
+            realm.add(song)
+        }
+        DispatchQueue.main.async {
+            try! Realm().refresh()
+            completion(song)
         }
     }
     

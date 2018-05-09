@@ -77,7 +77,9 @@ final class DownloadsVC: UIViewController {
     }
     
     private func playSong(from download: SongDownload) {
-        print("playSong")
+        if let song = download.song {
+            Player.main.playSong(song)
+        }
     }
     
     private func pauseDownload(_ download: SongDownload) {

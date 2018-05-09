@@ -14,11 +14,13 @@ final class BaseVC: UIViewController {
     
     private let tabBar = TabBar()
     
+    private weak var playerVC: PlayerVC?
+    
     private let playerBar = MiniPlayerBar()
     
     private let contentView = UIView()
     
-    private let libraryNC = UINavigationController(rootViewController: LibraryVC())
+    private let libraryNC = UINavigationController(rootViewController: LibraryVC.shared)
     
     private let browserVC = BrowserVC()
     
@@ -28,9 +30,16 @@ final class BaseVC: UIViewController {
 
     private let navigationManager = NavigationTransitionManager()
     
+    private let verticalTransitionManager = VerticalTransitionManager()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupViews()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        updatePlayerBar()
     }
     
     private func setupViews() {
@@ -99,14 +108,26 @@ final class BaseVC: UIViewController {
     func showPlayerBar() {
         view.bringSubview(toFront: tabBar)
         UIView.animate(0.48, damping: 0.9, velocity: 1) {
-            self.playerBar.frame.origin.y = self.view.frame.height - self.playerBar.frame.height - self.tabBar.frame.height
+            self.playerBar.frame.origin.y = screenHeight - self.playerBar.frame.height - self.tabBar.frame.height
         }
     }
     
     func hidePlayerBar() {
         view.bringSubview(toFront: tabBar)
         UIView.animate(0.4) {
-            self.playerBar.frame.origin.y = self.view.frame.height
+            self.playerBar.frame.origin.y = screenHeight
+        }
+    }
+    
+    func updatePlayerBar() {
+        if player.currentSong != nil, !player.currentSong.isInvalidated {
+            playerBar.setupTitle(player.currentSong.title)
+            playerBar.setupArtwork(player.currentSong.artwork)
+            if player.isPlaying {
+                playerBar.showPauseButton()
+            } else {
+                playerBar.showPlayButton()
+            }
         }
     }
 
@@ -135,46 +156,44 @@ extension BaseVC: MiniPlayerBarDelegate {
     }
     
     func tapPlayPauseButton() {
-        if player.isPlaying {
-            player.pause()
-        } else {
-            player.play()
-        }
+        player.isPlaying ? player.pause() : player.play()
     }
 
     func tapPlayerBar() {
-        print("show player controller")
+        let playerVC = PlayerVC()
+        self.playerVC = playerVC
+        //verticalTransitionManager.cornerRadius = 8
+        playerVC.transitioningDelegate = verticalTransitionManager
+        present(playerVC, animated: true)
     }
 }
 
 extension BaseVC: PlayerDelegate {
     
+    func playerStopped() {
+        hidePlayerBar()
+        playerVC?.dismiss(animated: true)
+    }
+    
     func playerPausedSong(_ song: Song) {
-        playerBar.showPlayButton()
+        updatePlayerBar()
+        playerVC?.updateViews()
     }
     
     func playerResumedSong(_ song: Song) {
         showPlayerBar()
-        playerBar.showPauseButton()
-        playerBar.setupTitle(song.title)
-        playerBar.setupArtwork(song.artwork)
+        updatePlayerBar()
+        playerVC?.updateViews()
+    }
+    
+    func playerUpdatedSongCurrentTime(currentTime: Float) {
+        playerVC?.updateProgressView()
     }
     
     func playerFailedSong(_ song: Song) {
-        playerBar.showPlayButton()
-        playerBar.setupTitle(song.title)
-        playerBar.setupArtwork(song.artwork)
         let alertVC = AlertController(message: "Cannot play \"\(song.title)\"")
         alertVC.font = UIFont(name: Fonts.general, size: 21)!
         alertVC.addAction(Action(title: "Okay", type: .cancel))
         alertVC.present()
     }
-    
-//    func playerChangedVolume(to value: Float) {
-//        print("playerChangedVolume")
-//    }
-//
-//    func playerUpdatedSongCurrentTime(elapsedTime: String, remainingTime: String) {
-//        print("playerUpdatedSongCurrentTime")
-//    }
 }

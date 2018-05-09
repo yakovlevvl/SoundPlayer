@@ -27,6 +27,8 @@ final class SearchVC: UIViewController {
     
     weak var delegate: SearchDelegate?
     
+    private let player = Player.main
+    
     private let library = Library.main
     
     private var songsOutput = [Song]()
@@ -192,6 +194,12 @@ final class SearchVC: UIViewController {
         }
     }
     
+    private func updatePlayerBar() {
+        if let baseVC = UIApplication.shared.windows.first?.rootViewController as? BaseVC {
+            baseVC.updatePlayerBar()
+        }
+    }
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
@@ -313,6 +321,9 @@ extension SearchVC: SongActions {
         library.renameSong(song, with: name) {
             self.updateSongsSection()
             self.updateSongsView()
+            if self.player.currentSong == song {
+                self.updatePlayerBar()
+            }
         }
     }
     
@@ -326,6 +337,11 @@ extension SearchVC: SongActions {
                 }
             }
         }
+        
+        if player.currentSong == song {
+            player.stop()
+        }
+        
         let checkPlaylists = !song.playlists.isEmpty
         library.removeSong(song) {
             self.updateSongsSection()

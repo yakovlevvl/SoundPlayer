@@ -342,6 +342,12 @@ final class EditPlaylistVC: NewPlaylistVC {
         topBar.title = "Edit Playlist"
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        addedSongs = addedSongs.filter { !$0.isInvalidated }
+        songsView.reloadData()
+    }
+    
     override func didTapAddMusicButton() {
         let addSongsVC = PlaylistAddSongsVC()
         addSongsVC.playlist = playlist
@@ -381,6 +387,12 @@ final class EditAlbumVC: NewAlbumVC {
         albumArtist = album.artist
         artworkImage = album.artwork
         topBar.title = "Edit Album"
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        addedSongs = addedSongs.filter { !$0.isInvalidated }
+        songsView.reloadData()
     }
     
     override func didTapAddMusicButton() {

@@ -42,6 +42,11 @@ class CompilationVC: UIViewController {
         setupViews()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        songsView.reloadData()
+    }
+    
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
         layoutViews()
@@ -90,6 +95,12 @@ class CompilationVC: UIViewController {
     
     private func tapBackButton() {
         navigationController?.popViewController(animated: true)
+    }
+    
+    fileprivate func updatePlayerBar() {
+        if let baseVC = UIApplication.shared.windows.first?.rootViewController as? BaseVC {
+            baseVC.updatePlayerBar()
+        }
     }
 }
 
@@ -196,6 +207,7 @@ extension PlaylistVC: EditPlaylistDelegate {
         songsView.reloadData()
         editPresenter.dismiss()
         updatePlaylistsView()
+        updatePlayerBar()
     }
     
     func tappedCloseButton() {
@@ -213,6 +225,9 @@ extension PlaylistVC: PlaylistSongActions {
     func renameSong(_ song: Song, with name: String, at indexPath: IndexPath) {
         library.renameSong(song, with: name) {
             self.songsView.reloadItems(at: [indexPath])
+            if self.player.currentSong == song {
+                self.updatePlayerBar()
+            }
         }
     }
     
@@ -317,6 +332,7 @@ extension AlbumVC: EditAlbumDelegate {
         songsView.reloadData()
         editPresenter.dismiss()
         updateAlbumsView()
+        updatePlayerBar()
     }
     
     func tappedCloseButton() {
@@ -339,16 +355,25 @@ extension AlbumVC: AlbumSongActions {
     func removeSongFromAlbum(_ song: Song, at indexPath: IndexPath) {
         library.removeSongFromAlbum(song) {
             self.songsView.deleteItems(at: [indexPath])
+            if self.player.currentSong == song {
+                self.updatePlayerBar()
+            }
         }
     }
     
     func renameSong(_ song: Song, with name: String, at indexPath: IndexPath) {
         library.renameSong(song, with: name) {
             self.songsView.reloadItems(at: [indexPath])
+            if self.player.currentSong == song {
+                self.updatePlayerBar()
+            }
         }
     }
     
     func removeSong(_ song: Song, at indexPath: IndexPath) {
+        if player.currentSong == song {
+            player.stop()
+        }
         let checkPlaylists = !song.playlists.isEmpty
         library.removeSong(song) {
             self.songsView.deleteItems(at: [indexPath])
@@ -381,6 +406,7 @@ extension AlbumVC: AlbumViewDelegate {
     private func removeAlbum() {
         library.removeAlbum(album) {
             self.updateAlbumsView()
+            self.updatePlayerBar()
             self.navigationController?.popViewController(animated: true)
         }
     }

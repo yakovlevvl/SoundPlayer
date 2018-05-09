@@ -30,13 +30,13 @@ final class MiniPlayerBar: UIView {
         return label
     }()
     
-    private let playPauseButton: PlayPauseButton = {
+    let playPauseButton: PlayPauseButton = {
         let button = PlayPauseButton(type: .custom)
         button.tintColor = .black
         return button
     }()
     
-    private let nextButton: UIButton = {
+    let nextButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setImage(UIImage(named: "NextMiniIcon"), for: .normal)
         button.contentMode = .center
@@ -68,7 +68,9 @@ final class MiniPlayerBar: UIView {
         addSubview(playPauseButton)
         
         nextButton.addTarget(self, action: #selector(tapNextButton), for: .touchUpInside)
-        playPauseButton.addTarget(self, action: #selector(tapPlayPauseButton), for: .touchUpInside)
+        
+        playPauseButton.addTarget(self, action: #selector(touchDownPlayPauseButton), for: .touchDown)
+        playPauseButton.addTarget(self, action: #selector(touchUpPlayPauseButton), for: [.touchUpInside, .touchUpOutside])
         
         setupTapGesture()
     }
@@ -99,8 +101,13 @@ final class MiniPlayerBar: UIView {
         addGestureRecognizer(tapGesture)
     }
     
-    @objc private func tapPlayPauseButton() {
+    @objc private func touchDownPlayPauseButton() {
+        decreasePlayPauseButton()
+    }
+    
+    @objc private func touchUpPlayPauseButton() {
         delegate?.tapPlayPauseButton()
+        increasePlayPauseButton()
     }
     
     @objc private func tapNextButton() {
@@ -110,43 +117,6 @@ final class MiniPlayerBar: UIView {
     
     @objc private func tapPlayerBar() {
         delegate?.tapPlayerBar()
-    }
-    
-    func showPlayButton() {
-        setupPlayPauseButtonState(.play)
-    }
-    
-    func showPauseButton() {
-        setupPlayPauseButtonState(.pause)
-    }
-    
-    private func setupPlayPauseButtonState(_ state: PlayPauseButtonState) {
-        playPauseButton.layer.removeAllAnimations()
-        UIView.animate(0.11, options: .allowUserInteraction, animation: {
-            self.playPauseButton.transform = CGAffineTransform(scaleX: 0.7, y: 0.7)
-            self.playPauseButton.alpha = 0.3
-        }, completion: { finished in
-            if !finished { return }
-            self.playPauseButton.controlState = state
-            UIView.animate(0.11, options: .allowUserInteraction) {
-                self.playPauseButton.transform = .identity
-                self.playPauseButton.alpha = 1
-            }
-        })
-    }
-    
-    private func animateNextButton() {
-        nextButton.layer.removeAllAnimations()
-        UIView.animate(0.11, options: .allowUserInteraction, animation: {
-            self.nextButton.transform = CGAffineTransform(scaleX: 0.7, y: 0.7)
-            self.nextButton.alpha = 0.5
-        }, completion: { finished in
-            if !finished { return }
-            UIView.animate(0.11, options: .allowUserInteraction) {
-                self.nextButton.transform = .identity
-                self.nextButton.alpha = 1
-            }
-        })
     }
     
     func setupTitle(_ title: String) {
@@ -163,3 +133,6 @@ final class MiniPlayerBar: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 }
+
+extension MiniPlayerBar: PlayerControlable {}
+

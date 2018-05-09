@@ -11,28 +11,15 @@ import AVFoundation
 
 protocol PlayerDelegate: class {
     
-    func playerStartedSong(_ song: Song)
+    func playerStopped()
+    
+    func playerFailedSong(_ song: Song)
     
     func playerPausedSong(_ song: Song)
     
     func playerResumedSong(_ song: Song)
     
-    func playerFailedSong(_ song: Song)
-    
-    func playerChangedVolume(to value: Float)
-    
-    func playerUpdatedSongCurrentTime(elapsedTime: String, remainingTime: String)
-}
-
-extension PlayerDelegate {
-    
-    func playerFailedSong(_ song: Song) {}
-    
-    func playerStartedSong(_ song: Song) {}
-    
-    func playerChangedVolume(to value: Float) {}
-    
-    func playerUpdatedSongCurrentTime(elapsedTime: String, remainingTime: String) {}
+    func playerUpdatedSongCurrentTime(currentTime: Float)
 }
 
 class Player: NSObject {
@@ -53,7 +40,7 @@ class Player: NSObject {
                 }
             }
         }
-    }
+    } 
     
     private var shuffleArray = [Song]()
     
@@ -61,9 +48,9 @@ class Player: NSObject {
     
     private var timer: Timer!
     
-    private var repeatState = false
+    var repeatState = false
     
-    private var shuffleState = false {
+    var shuffleState = false {
         didSet {
             if shuffleState {
                 setupShuffleArray()
@@ -73,7 +60,84 @@ class Player: NSObject {
         }
     }
     
-    private var volumeObservation: NSKeyValueObservation?
+    var volume: Float {
+        get {
+            return audioSession.outputVolume
+        }
+        set {
+            audioPlayer?.volume = newValue
+        }
+    }
+    
+    var currentTime: Float {
+        get {
+            return Float(audioPlayer?.currentTime ?? 0)
+        }
+        set {
+            DispatchQueue.global().async {
+                self.audioPlayer?.currentTime = TimeInterval(newValue)
+            }
+        }
+    }
+    
+    var currentDuration: Float {
+        return Float(audioPlayer?.duration ?? 0)
+    }
+    
+    var isPlaying: Bool {
+        return audioPlayer?.isPlaying ?? false
+    }
+    
+    private var playingObservation: NSKeyValueObservation?
+    
+    private override init() {
+        super.init()
+        setupRemoteCenterCommands()
+        NotificationCenter.default.addObserver(self, selector: #selector(audioSessionInterapted), name: .AVAudioSessionInterruption, object: nil)
+    }
+    
+    func playSong(_ song: Song) {
+        currentSong = song
+        prepareSong()
+    }
+    
+    private func prepareSong() {
+        do {
+            try audioSession.setCategory(AVAudioSessionCategoryPlayback)
+        } catch {
+            return
+        }
+        
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: currentSong.url)
+        } catch {
+            stop()
+            clearRemoteCenterInfo()
+            delegate?.playerFailedSong(currentSong)
+            return
+        }
+        
+        audioPlayer?.delegate = self
+        playSong()
+    }
+    
+    private func playSong() {
+        play()
+        startTimer()
+        resetPlaybackTime()
+        setupRemoteCenterInfo()
+    }
+    
+    private func startTimer() {
+        if timer == nil {
+            timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(songCurrentTimeChanged), userInfo: nil, repeats: true)
+            timer.fire()
+        }
+    }
+    
+    private func stopTimer() {
+        timer.invalidate()
+    }
     
     private func setupShuffleArray() {
         if songsList.isEmpty { return }
@@ -104,96 +168,17 @@ class Player: NSObject {
         }
     }
     
-    var isPlaying: Bool {
-        return audioPlayer?.isPlaying ?? false
-    }
-    
-    private override init() {
-        super.init()
-        setupRemoteCenterCommands()
-    }
-    
-    func playSong(_ song: Song) {
-        currentSong = song
-        prepareSong()
-    }
-    
-    private func prepareSong() {
-        do {
-            try audioSession.setCategory(AVAudioSessionCategoryPlayback)
-        } catch {
-            return
-        }
-        
-        do {
-            audioPlayer = try AVAudioPlayer(contentsOf: currentSong.url)
-        } catch {
-            if audioPlayer != nil {
-                stop()
-                audioPlayer = nil
-            }
-            clearRemoteCenterInfo()
-            print("Cannot play this song", error)
-            delegate?.playerFailedSong(currentSong)
-            return
-        }
-        
-        audioPlayer?.delegate = self
-        playSong()
-    }
-    
-    private func playSong() {
-        play()
-        startTimer()
-        resetPlaybackTime()
-        setupRemoteCenterInfo()
-        delegate?.playerStartedSong(currentSong)
-    }
-    
-    private func startTimer() {
-        if timer == nil {
-            timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(updateSongCurrentTime), userInfo: nil, repeats: true)
-            timer.fire()
+    @objc private func songCurrentTimeChanged() {
+        if isPlaying {
+            delegate?.playerUpdatedSongCurrentTime(currentTime: currentTime)
         }
     }
-    
-    private func stopTimer() {
-        timer.invalidate()
-    }
-    
-    @objc private func updateSongCurrentTime() {
-        if !isPlaying {
-            return
-        }
-        
-        let time = calculateTimeFromNSTimeInterval(audioPlayer!.currentTime)
-        let duration = calculateTimeFromNSTimeInterval(audioPlayer!.duration)
-        
-        var elapsedTime = "\(time.minute):\(time.second)"
-        if time.hour != "0" {
-            elapsedTime = "\(time.hour):\(elapsedTime)"
-        }
-        var remainingTime = "\(duration.minute):\(duration.second)"
-        if duration.hour != "0" {
-            remainingTime = "\(duration.hour):\(remainingTime)"
-        }
-        
-        delegate?.playerUpdatedSongCurrentTime(elapsedTime: elapsedTime, remainingTime: remainingTime)
-    }
-    
-    func calculateTimeFromNSTimeInterval(_ duration: TimeInterval) -> (hour: String, minute: String, second: String) {
-        let hour_   = abs(Int(duration)/3600)
-        let minute_ = abs(Int((duration/60).truncatingRemainder(dividingBy: 60)))
-        let second_ = abs(Int(duration.truncatingRemainder(dividingBy: 60)))
-        
-        let hour = hour_ > 9 ? "\(hour_)" : "0\(hour_)"
-        let minute = minute_ > 9 ? "\(minute_)" : "0\(minute_)"
-        let second = second_ > 9 ? "\(second_)" : "0\(second_)"
-        return (hour, minute, second)
-    }
-    
+
     func stop() {
         audioPlayer?.stop()
+        audioPlayer = nil
+        currentSong = nil
+        delegate?.playerStopped()
     }
     
     func play() {
@@ -318,10 +303,8 @@ class Player: NSObject {
         playSong(prevSong)
     }
     
-    private func setupVolumeObservation() {
-        volumeObservation = audioSession.observe(\.outputVolume) { [unowned self] audioSession, _ in
-            self.delegate?.playerChangedVolume(to: audioSession.outputVolume)
-        }
+    @objc private func audioSessionInterapted() {
+        pause()
     }
 
 }

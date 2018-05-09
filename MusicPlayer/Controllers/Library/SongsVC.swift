@@ -123,6 +123,12 @@ final class SongsVC: UIViewController {
         libraryVC.updatePlaylistsView()
     }
     
+    private func updatePlayerBar() {
+        if let baseVC = UIApplication.shared.windows.first?.rootViewController as? BaseVC {
+            baseVC.updatePlayerBar()
+        }
+    }
+    
 }
 
 extension SongsVC: SongCellDelegate {
@@ -185,6 +191,9 @@ extension SongsVC: SongActions {
     func renameSong(_ song: Song, with name: String, at indexPath: IndexPath) {
         library.renameSong(with: indexPath.item, with: name) {
             self.songsView.reloadItems(at: [indexPath])
+            if self.player.currentSong == song {
+                self.updatePlayerBar()
+            }
         }
     }
     
@@ -195,6 +204,11 @@ extension SongsVC: SongActions {
             }
         }
         let checkPlaylists = !song.playlists.isEmpty
+        
+        if player.currentSong == song {
+            player.stop()
+        }
+        
         library.removeSong(with: indexPath.item) {
             self.songsView.deleteItems(at: [indexPath])
             if checkPlaylists {

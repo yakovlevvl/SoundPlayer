@@ -22,8 +22,21 @@ final class PlayPauseButton: UIButton {
         }
     }
     
-    var playImage = UIImage(named: "PlayMiniIcon")
-    var pauseImage = UIImage(named: "PauseMiniIcon")
+    var playImage = UIImage(named: "PlayMiniIcon") {
+        didSet {
+            if controlState == .play {
+                controlState = .play
+            }
+        }
+    }
+    
+    var pauseImage = UIImage(named: "PauseMiniIcon") {
+        didSet {
+            if controlState == .pause {
+                controlState = .pause
+            }
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)

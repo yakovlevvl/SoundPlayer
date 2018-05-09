@@ -13,15 +13,22 @@ final class ArtworkView: UIView {
     private let imageView: ImageView = {
         let imageView = ImageView()
         imageView.backgroundColor = .white
-        imageView.layer.cornerRadius = 6
         imageView.clipsToBounds = true
-        imageView.contentMode = .center
         return imageView
     }()
     
-    var showShadow = true
+    var showShadow = true {
+        didSet {
+            layer.shadowOpacity = showShadow ? 0.4 : 0
+        }
+    }
     
-    var cornerRadius: CGFloat = 6
+    var cornerRadius: CGFloat = 6 {
+        didSet {
+            imageView.layer.cornerRadius = cornerRadius
+            layoutIfNeeded()
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -35,21 +42,19 @@ final class ArtworkView: UIView {
     
     private func setupViews() {
         backgroundColor = .clear
+        imageView.layer.cornerRadius = cornerRadius
         addSubview(imageView)
+        setupShadow()
     }
     
     private func layoutViews() {
         imageView.frame = bounds
-        imageView.layer.cornerRadius = cornerRadius
-        if showShadow {
-            setupShadow()
-        }
+        layer.shadowPath = UIBezierPath(roundedRect: bounds,
+            cornerRadius: cornerRadius).cgPath
     }
     
     private func setupShadow() {
-        layer.shadowPath = UIBezierPath(roundedRect: bounds,
-            cornerRadius: 6).cgPath
-        layer.shadowOpacity = 0.4
+        layer.shadowOpacity = showShadow ? 0.4 : 0
         layer.shadowOffset = .zero
         layer.shadowColor = UIColor.gray.cgColor
         layer.shadowRadius = 14
@@ -66,7 +71,31 @@ final class ArtworkView: UIView {
     
     func setDefaultArtwork() {
         imageView.contentMode = .center
-        imageView.image = UIImage(named: frame.width > 70 ? "AlbumIcon" : "AlbumMiniIcon")
+        if frame.width < 70 {
+            imageView.image = UIImage(named: "AlbumMiniIcon")
+        } else if frame.width > 70, frame.width < 160 {
+            imageView.image = UIImage(named: "AlbumIcon")
+        } else if frame.width > 160 {
+            imageView.image = UIImage(named: "AlbumBigIcon")
+        }
+    }
+    
+    func showShadowAnimated() {
+        let initialOpacity = layer.shadowOpacity
+        layer.shadowOpacity = 0.4
+        let animation = CABasicAnimation(keyPath: "shadowOpacity")
+        animation.fromValue = initialOpacity
+        animation.duration = 0.28
+        layer.add(animation, forKey: nil)
+    }
+    
+    func hideShadowAnimated() {
+        let initialOpacity = layer.shadowOpacity
+        layer.shadowOpacity = 0.2
+        let animation = CABasicAnimation(keyPath: "shadowOpacity")
+        animation.fromValue = initialOpacity
+        animation.duration = 0.28
+        layer.add(animation, forKey: nil)
     }
     
     func removeArtwork() {

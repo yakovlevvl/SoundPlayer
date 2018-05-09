@@ -303,11 +303,12 @@ extension BrowserVC: DownloadServiceDelegate {
     
     func downloadServiceFinishedDownloading(with url: URL, to location: URL, title: String?, id: String?) {
         downloadsManager.setupStatus(.downloaded, forDownloadWith: id!) {
-            Library.main.addSong(with: location, title: title!) {
+            self.downloadDelegate?.browserFinishedDownload(with: id!)
+            Library.main.addSong(with: location, title: title!) { song in
+                self.downloadsManager.linkDownload(with: id!, to: song)
                 self.delegate?.browserDownloadedSong()
                 self.presentNotificationForDownloadedSong(with: title!, url: location)
             }
-            self.downloadDelegate?.browserFinishedDownload(with: id!)
         }
     }
     

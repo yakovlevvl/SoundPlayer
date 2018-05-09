@@ -180,6 +180,15 @@ class DownloadsManager {
         }
     }
     
+    func linkDownload(with id: String, to song: Song) {
+        download(with: id) { download in
+            let realm = try? Realm()
+            try? realm?.write {
+                download?.song = song
+            }
+        }
+    }
+    
     func clearFinishedDownloads(completion: @escaping () -> ()) {
         realmQueue.async {
             let realm = try? Realm()

@@ -38,6 +38,18 @@ final class LibraryVC: UIViewController {
     
     private var searchPresenter: FadeChildControllerPresenter!
     
+    
+    static let shared = LibraryVC(nibName: nil, bundle: nil)
+    
+    private override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupViews()
@@ -151,7 +163,7 @@ extension LibraryVC: LibraryTopBarDelegate {
 extension LibraryVC: SearchDelegate {
     
     func didSelectSong(_ song: Song) {
-        
+        Player.main.playSong(song)
     }
     
     func tapCancelButton() {
