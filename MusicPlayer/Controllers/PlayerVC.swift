@@ -215,7 +215,7 @@ final class PlayerVC: UIViewController {
     }
     
     private func setupArtwork() {
-        artworkView.setArtwork(player.currentSong.artwork)
+        artworkView.setArtwork(player.currentSong?.artwork)
     }
     
     func updateProgressView() {
@@ -226,11 +226,11 @@ final class PlayerVC: UIViewController {
     }
     
     private func setupTitleLabel() {
-        titleLabel.text = player.currentSong.title
+        titleLabel.text = player.currentSong?.title ?? "---"
     }
     
     private func setupArtistLabel() {
-        if let album = player.currentSong.album {
+        if let album = player.currentSong?.album {
             artistLabel.text = "\(album.artist) - \(album.title)"
         } else {
             artistLabel.text = "Unknown Album"
@@ -278,7 +278,7 @@ final class PlayerVC: UIViewController {
     }
     
     @objc private func tapMoreButton() {
-        showActions(for: player.currentSong, at: IndexPath())
+        showActions(for: player.currentSong!, at: IndexPath())
     }
     
     @objc private func tapShuffleButton() {

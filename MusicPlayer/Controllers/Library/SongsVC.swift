@@ -105,8 +105,12 @@ final class SongsVC: UIViewController {
     
     private func setupSortMethod(_ method: Library.SortMethod) {
         if library.songsSortMethod == method { return }
+        let updatePlayerSongsList = player.songsList == library.allSongs
         library.songsSortMethod = method
         updateSongsView()
+        if updatePlayerSongsList {
+            player.songsList = library.allSongs
+        }
     }
     
     func updateSongsView() {
@@ -209,6 +213,10 @@ extension SongsVC: SongActions {
             player.stop()
         }
         
+        if player.songsList.contains(song) {
+            player.songsList = player.songsList.filter { $0 != song }
+        }
+    
         library.removeSong(with: indexPath.item) {
             self.songsView.deleteItems(at: [indexPath])
             if checkPlaylists {

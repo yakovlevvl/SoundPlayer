@@ -198,6 +198,7 @@ final class PlaylistVC: CompilationVC {
         let song = playlist.songs[indexPath.item]
         player.playSong(song)
         player.songsList = Array(playlist.songs)
+        print(player.songsList)
     }
 }
 
@@ -232,6 +233,10 @@ extension PlaylistVC: PlaylistSongActions {
     }
     
     func removeSongFromPlaylist(_ song: Song, at indexPath: IndexPath) {
+        if player.songsList == Array(playlist.songs) {
+            let index = player.songsList.index { $0 == song }
+            player.songsList.remove(at: index!)
+        }
         library.removeSongFromPlaylist(song, playlist: playlist) {
             self.songsView.deleteItems(at: [indexPath])
         }
@@ -353,6 +358,10 @@ extension AlbumVC: EditAlbumDelegate {
 extension AlbumVC: AlbumSongActions {
     
     func removeSongFromAlbum(_ song: Song, at indexPath: IndexPath) {
+        if player.songsList == Array(album.songs) {
+            let index = player.songsList.index { $0 == song }
+            player.songsList.remove(at: index!)
+        }
         library.removeSongFromAlbum(song) {
             self.songsView.deleteItems(at: [indexPath])
             if self.player.currentSong == song {
@@ -375,6 +384,9 @@ extension AlbumVC: AlbumSongActions {
             player.stop()
         }
         let checkPlaylists = !song.playlists.isEmpty
+        if player.songsList.contains(song) {
+            player.songsList = player.songsList.filter { $0 != song }
+        }
         library.removeSong(song) {
             self.songsView.deleteItems(at: [indexPath])
             if checkPlaylists {

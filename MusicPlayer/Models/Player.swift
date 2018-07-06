@@ -22,7 +22,7 @@ protocol PlayerDelegate: class {
     func playerUpdatedSongCurrentTime(currentTime: Float)
 }
 
-class Player: NSObject {
+final class Player: NSObject {
     
     static let main = Player()
     
@@ -32,6 +32,14 @@ class Player: NSObject {
     
     private var audioPlayer: AVAudioPlayer?
     
+    private(set) var currentSong: Song?
+    
+    private var currentSongIndex = 0
+    
+    private var shuffleArray = [Song]()
+    
+    private var timer: Timer!
+    
     var songsList = [Song]() {
         didSet {
             if songsList != oldValue {
@@ -40,13 +48,7 @@ class Player: NSObject {
                 }
             }
         }
-    } 
-    
-    private var shuffleArray = [Song]()
-    
-    private(set) var currentSong: Song!
-    
-    private var timer: Timer!
+    }
     
     var repeatState = false
     
@@ -60,23 +62,12 @@ class Player: NSObject {
         }
     }
     
-    var volume: Float {
-        get {
-            return audioSession.outputVolume
-        }
-        set {
-            audioPlayer?.volume = newValue
-        }
-    }
-    
     var currentTime: Float {
         get {
             return Float(audioPlayer?.currentTime ?? 0)
         }
         set {
-            DispatchQueue.global().async {
-                self.audioPlayer?.currentTime = TimeInterval(newValue)
-            }
+            setupCurrentTime(TimeInterval(newValue))
         }
     }
     
@@ -88,66 +79,33 @@ class Player: NSObject {
         return audioPlayer?.isPlaying ?? false
     }
     
-    private var playingObservation: NSKeyValueObservation?
-    
     private override init() {
         super.init()
         setupRemoteCenterCommands()
-        NotificationCenter.default.addObserver(self, selector: #selector(audioSessionInterapted), name: .AVAudioSessionInterruption, object: nil)
+        setupInterruptionObserver()
+        try? audioSession.setCategory(AVAudioSessionCategoryPlayback)
+    }
+    
+    func playSong(_ song: Song, with index: Int, in songsList: [Song]) {
+        playSong(song)
+        currentSongIndex = index
+        self.songsList = songsList
     }
     
     func playSong(_ song: Song) {
         currentSong = song
-        prepareSong()
-    }
-    
-    private func prepareSong() {
-        do {
-            try audioSession.setCategory(AVAudioSessionCategoryPlayback)
-        } catch {
-            return
-        }
         
         do {
-            audioPlayer = try AVAudioPlayer(contentsOf: currentSong.url)
+            audioPlayer = try AVAudioPlayer(contentsOf: currentSong!.url)
+            audioPlayer?.delegate = self
         } catch {
             stop()
-            clearRemoteCenterInfo()
-            delegate?.playerFailedSong(currentSong)
+            delegate?.playerFailedSong(currentSong!)
             return
         }
         
-        audioPlayer?.delegate = self
-        playSong()
-    }
-    
-    private func playSong() {
         play()
         startTimer()
-        resetPlaybackTime()
-        setupRemoteCenterInfo()
-    }
-    
-    private func startTimer() {
-        if timer == nil {
-            timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(songCurrentTimeChanged), userInfo: nil, repeats: true)
-            timer.fire()
-        }
-    }
-    
-    private func stopTimer() {
-        timer.invalidate()
-    }
-    
-    private func setupShuffleArray() {
-        if songsList.isEmpty { return }
-        shuffleArray = songsList.shuffled()
-        if currentSong != nil {
-            if let index = shuffleArray.index(of: currentSong) {
-                shuffleArray.remove(at: index)
-                shuffleArray.insert(currentSong, at: 0)
-            }
-        }
     }
     
     func playSongsList(_ songs: [Song]) {
@@ -155,6 +113,7 @@ class Player: NSObject {
             repeatState = false
             shuffleState = false
             songsList = songs
+            currentSongIndex = 0
             playSong(songsList.first!)
         }
     }
@@ -164,52 +123,132 @@ class Player: NSObject {
             currentSong = nil
             songsList = songs
             shuffleState = true
+            currentSongIndex = 0
             playSong(shuffleArray.first!)
         }
     }
     
-    @objc private func songCurrentTimeChanged() {
+    private func setupShuffleArray() {
+        shuffleArray = songsList.shuffled()
+        guard let currentSong = currentSong else { return }
+        if let index = shuffleArray.index(of: currentSong) {
+            shuffleArray.remove(at: index)
+            shuffleArray.insert(currentSong, at: 0)
+        }
+    }
+    
+    private func startTimer() {
+        stopTimer()
+        if timer == nil {
+            timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(currentTimeChanged), userInfo: nil, repeats: true)
+            timer.fire()
+        }
+    }
+    
+    private func stopTimer() {
+        if timer != nil {
+            timer.invalidate()
+            timer = nil
+        }
+    }
+    
+    @objc private func currentTimeChanged() {
         if isPlaying {
             delegate?.playerUpdatedSongCurrentTime(currentTime: currentTime)
         }
     }
-
+    
+    func play() {
+        if let player = audioPlayer, let song = currentSong {
+            player.play()
+            delegate?.playerResumedSong(song)
+            setupRemoteCenterInfo()
+        }
+    }
+    
+    func pause() {
+        if let player = audioPlayer, let song = currentSong {
+            player.pause()
+            delegate?.playerPausedSong(song)
+            setupRemoteCenterInfo()
+        }
+    }
+    
     func stop() {
         audioPlayer?.stop()
         audioPlayer = nil
         currentSong = nil
         delegate?.playerStopped()
+        clearRemoteCenterInfo()
+        stopTimer()
     }
     
-    func play() {
-        if audioPlayer != nil {
-            audioPlayer?.play()
-            delegate?.playerResumedSong(currentSong)
+    func playNextSong() {
+        let songs: [Song]
+        
+        if shuffleState {
+            songs = shuffleArray
+        } else {
+            songs = songsList
+        }
+        
+        guard let currentSong = currentSong else { return }
+        
+        if let nextSong = songs.after(item: currentSong) {
+            playSong(nextSong)
+        } else {
+            let song = songs.isEmpty ? currentSong : songs.first!
+            playSong(song)
+            pause()
         }
     }
     
-    func pause() {
-        if audioPlayer != nil {
-            audioPlayer?.pause()
-            delegate?.playerPausedSong(currentSong)
+    func playPreviousSong() {
+        let songs: [Song]
+        
+        if shuffleState {
+            songs = shuffleArray
+        } else {
+            songs = songsList
+        }
+        
+        guard let currentSong = currentSong else { return }
+        
+        if let prevSong = songs.before(item: currentSong) {
+            playSong(prevSong)
+        } else {
+            playSong(currentSong)
+        }
+    }
+    
+    private func setupCurrentTime(_ time: TimeInterval) {
+        DispatchQueue.global(qos: .userInteractive).async {
+            self.audioPlayer?.currentTime = time
+            DispatchQueue.main.async {
+                self.setupRemoteCenterInfo()
+            }
         }
     }
     
     private func setupRemoteCenterInfo() {
-        let title = currentSong.title
+        guard let player = audioPlayer, let song = currentSong else {
+            return clearRemoteCenterInfo()
+        }
+        
+        let title = song.title
         var nowPlayingInfo = [MPMediaItemPropertyTitle : title] as [String : Any]
         
-        nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = audioPlayer?.duration
-        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = audioPlayer?.currentTime
+        nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = player.duration
+        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1 : 0
         
-        if let album = currentSong.album?.title {
+        if let album = song.album?.title {
             nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = album
         }
-        if let artist = currentSong.album?.artist {
+        if let artist = song.album?.artist {
             nowPlayingInfo[MPMediaItemPropertyArtist] = artist
         }
-        if let artwork = currentSong.artwork {
+        if let artwork = song.artwork {
             let albumArtwork = MPMediaItemArtwork(boundsSize: artwork.size) { _ in
                 return artwork
             }
@@ -223,12 +262,10 @@ class Player: NSObject {
         let remoteCenter = MPRemoteCommandCenter.shared()
         remoteCenter.playCommand.addTarget { event in
             self.play()
-            self.setupRemoteCenterInfo()
             return .success
         }
         remoteCenter.pauseCommand.addTarget { event in
             self.pause()
-            self.setupRemoteCenterInfo()
             return .success
         }
         remoteCenter.nextTrackCommand.addTarget { event in
@@ -240,17 +277,12 @@ class Player: NSObject {
             return .success
         }
         remoteCenter.changePlaybackPositionCommand.addTarget { event in
-            self.audioPlayer?.currentTime = (event as! MPChangePlaybackPositionCommandEvent).positionTime
-            self.setupRemoteCenterInfo()
+            let currentTime = (event as! MPChangePlaybackPositionCommandEvent).positionTime
+            self.setupCurrentTime(currentTime)
             return .success
         }
         remoteCenter.togglePlayPauseCommand.addTarget { event in
-            if self.isPlaying {
-                self.pause()
-            } else {
-                self.play()
-            }
-            self.setupRemoteCenterInfo()
+            self.isPlaying ? self.pause() : self.play()
             return .success
         }
     }
@@ -259,68 +291,35 @@ class Player: NSObject {
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
     
-    private func resetPlaybackTime() {
-        MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyElapsedPlaybackTime] = nil
+    private func setupInterruptionObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(audioSessionInterrupted), name: .AVAudioSessionInterruption, object: nil)
     }
     
-    func playNextSong() {
-        let songs: [Song]
-        
-        if shuffleState {
-            songs = shuffleArray
-        } else {
-            songs = songsList
-        }
-        
-        guard let nextSong = songs.next(item: currentSong) else {
-            if !songs.isEmpty {
-                let song = songs.first!
-                playSong(song)
-                pause()
-            } else {
-                playSong(currentSong)
-                pause()
-            }
-            setupRemoteCenterInfo()
-            return
-        }
-        playSong(nextSong)
-    }
-
-    func playPreviousSong() {
-        let songs: [Song]
-        
-        if shuffleState {
-            songs = shuffleArray
-        } else {
-            songs = songsList
-        }
-        
-        guard let prevSong = songs.prev(item: currentSong) else {
-            playSong(currentSong)
-            return
-        }
-        playSong(prevSong)
-    }
-    
-    @objc private func audioSessionInterapted() {
+    @objc private func audioSessionInterrupted() {
         pause()
     }
-
+    
+    deinit {
+        stopTimer()
+        NotificationCenter.default.removeObserver(self)
+    }
 }
 
 extension Player: AVAudioPlayerDelegate {
     
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         switch (repeatState, shuffleState) {
-        case (false, false) : playNextSong()
-        case (true, true) : playSong(currentSong)
-        case (true, false) : playSong(currentSong)
-        case (false, true) : playNextSong()
+        case (false, false), (false, true) :
+            playNextSong()
+            
+        case (true, true), (true, false) :
+            if let song = currentSong {
+                playSong(song)
+            }
         }
     }
     
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-        print("audioPlayerDecodeErrorDidOccur")
+        stop()
     }
 }

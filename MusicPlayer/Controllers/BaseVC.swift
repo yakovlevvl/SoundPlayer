@@ -120,9 +120,9 @@ final class BaseVC: UIViewController {
     }
     
     func updatePlayerBar() {
-        if player.currentSong != nil, !player.currentSong.isInvalidated {
-            playerBar.setupTitle(player.currentSong.title)
-            playerBar.setupArtwork(player.currentSong.artwork)
+        if let song = player.currentSong, !song.isInvalidated {
+            playerBar.setupTitle(song.title)
+            playerBar.setupArtwork(song.artwork)
             if player.isPlaying {
                 playerBar.showPauseButton()
             } else {

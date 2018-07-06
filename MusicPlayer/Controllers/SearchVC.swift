@@ -342,6 +342,10 @@ extension SearchVC: SongActions {
             player.stop()
         }
         
+        if player.songsList.contains(song) {
+            player.songsList = player.songsList.filter { $0 != song }
+        }
+        
         let checkPlaylists = !song.playlists.isEmpty
         library.removeSong(song) {
             self.updateSongsSection()

@@ -186,14 +186,14 @@ extension FileManager {
 
 extension Array where Element: Hashable {
     
-    func next(item: Element) -> Element? {
+    func after(item: Element) -> Element? {
         if let index = index(of: item), index + 1 < count {
             return self[index + 1]
         }
         return nil
     }
     
-    func prev(item: Element) -> Element? {
+    func before(item: Element) -> Element? {
         if let index = index(of: item), index > 0 {
             return self[index - 1]
         }
