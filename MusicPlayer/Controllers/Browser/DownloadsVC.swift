@@ -78,7 +78,7 @@ final class DownloadsVC: UIViewController {
     
     private func playSong(from download: SongDownload) {
         if let song = download.song {
-            Player.main.playSong(song)
+            Player.main.play(song: song)
         }
     }
     

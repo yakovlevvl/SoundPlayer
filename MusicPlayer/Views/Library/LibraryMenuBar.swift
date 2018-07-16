@@ -31,6 +31,7 @@ final class LibraryMenuBar: UIViewController {
         let view = UIView()
         view.backgroundColor = UIColor(hex: "D0021B")
         view.frame.size.height = 3
+        view.layer.cornerRadius = 1
         return view
     }()
     

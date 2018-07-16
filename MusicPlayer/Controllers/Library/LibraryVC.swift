@@ -163,7 +163,7 @@ extension LibraryVC: LibraryTopBarDelegate {
 extension LibraryVC: SearchDelegate {
     
     func didSelectSong(_ song: Song) {
-        Player.main.playSong(song)
+        Player.main.play(song: song)
     }
     
     func tapCancelButton() {

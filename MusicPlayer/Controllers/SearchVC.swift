@@ -60,6 +60,7 @@ final class SearchVC: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         updateAllSections()
+        player.currentSong != nil ? playerBarAppeared() : playerBarDisappeared()
     }
     
     override func viewWillLayoutSubviews() {
@@ -88,6 +89,8 @@ final class SearchVC: UIViewController {
         collectionView.register(SearchTitleHeader.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: SearchTitleHeader.reuseId)
 
         setupKeyboardObserver()
+        setupPlayerBarObserver()
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.searchBar.showKeyboard()
         }
@@ -186,8 +189,7 @@ final class SearchVC: UIViewController {
     @objc private func keyboardWillChangeFrame(notification: Notification) {
         let frame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
         if frame.origin.y >= view.frame.height {
-            collectionView.contentInset.bottom = 0
-            collectionView.scrollIndicatorInsets.bottom = 0
+            player.currentSong != nil ? playerBarAppeared() : playerBarDisappeared()
         } else {
             collectionView.contentInset.bottom = view.frame.height - frame.origin.y
             collectionView.scrollIndicatorInsets.bottom = collectionView.contentInset.bottom
@@ -338,15 +340,9 @@ extension SearchVC: SongActions {
             }
         }
         
-        if player.currentSong == song {
-            player.stop()
-        }
-        
-        if player.songsList.contains(song) {
-            player.songsList = player.songsList.filter { $0 != song }
-        }
-        
+        player.removeSongFromSongsList(song: song)
         let checkPlaylists = !song.playlists.isEmpty
+        
         library.removeSong(song) {
             self.updateSongsSection()
             self.updateSongsView()
@@ -359,5 +355,18 @@ extension SearchVC: SongActions {
                 }
             }
         }
+    }
+}
+
+extension SearchVC: PlayerBarObservable {
+    
+    func playerBarAppeared() {
+        collectionView.contentInset.bottom = PlayerBarProperties.barHeight
+        collectionView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+    }
+    
+    func playerBarDisappeared() {
+        collectionView.contentInset.bottom = 0
+        collectionView.scrollIndicatorInsets.bottom = 0
     }
 }

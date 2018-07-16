@@ -64,6 +64,11 @@ final class AlbumsVC: UIViewController {
         setupViews()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        player.currentSong != nil ? playerBarAppeared() : playerBarDisappeared()
+    }
+    
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
         layoutViews()
@@ -82,6 +87,8 @@ final class AlbumsVC: UIViewController {
         
         addButton.addTarget(self, action: #selector(tapAddButton), for: .touchUpInside)
         sortButton.addTarget(self, action: #selector(tapSortButton), for: .touchUpInside)
+        
+        setupPlayerBarObserver()
     }
     
     private func layoutViews() {
@@ -131,6 +138,10 @@ final class AlbumsVC: UIViewController {
     
     func updateAlbumsView() {
         albumsView.reloadSections(IndexSet(integer: 0))
+    }
+    
+    deinit {
+        removePlayerBarObserver()
     }
 }
 
@@ -191,6 +202,19 @@ extension AlbumsVC: UICollectionViewDelegateFlowLayout {
                 self.sortButton.alpha = 1
             }
         }
+    }
+}
+
+extension AlbumsVC: PlayerBarObservable {
+    
+    func playerBarAppeared() {
+        albumsView.contentInset.bottom = PlayerBarProperties.barHeight
+        albumsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+    }
+    
+    func playerBarDisappeared() {
+        albumsView.contentInset.bottom = 0
+        albumsView.scrollIndicatorInsets.bottom = 0
     }
 }
 

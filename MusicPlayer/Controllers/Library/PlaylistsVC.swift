@@ -64,6 +64,11 @@ final class PlaylistsVC: UIViewController {
         setupViews()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        player.currentSong != nil ? playerBarAppeared() : playerBarDisappeared()
+    }
+    
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
         layoutViews()
@@ -82,6 +87,8 @@ final class PlaylistsVC: UIViewController {
         
         addButton.addTarget(self, action: #selector(tapAddButton), for: .touchUpInside)
         sortButton.addTarget(self, action: #selector(tapSortButton), for: .touchUpInside)
+        
+        setupPlayerBarObserver()
     }
     
     private func layoutViews() {
@@ -127,6 +134,10 @@ final class PlaylistsVC: UIViewController {
     
     func updatePlaylistsView() {
         playlistsView.reloadSections(IndexSet(integer: 0))
+    }
+    
+    deinit {
+        removePlayerBarObserver()
     }
 }
 
@@ -186,6 +197,19 @@ extension PlaylistsVC: UICollectionViewDelegateFlowLayout {
                 self.sortButton.alpha = 1
             }
         }
+    }
+}
+
+extension PlaylistsVC: PlayerBarObservable {
+    
+    func playerBarAppeared() {
+        playlistsView.contentInset.bottom = PlayerBarProperties.barHeight
+        playlistsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+    }
+    
+    func playerBarDisappeared() {
+        playlistsView.contentInset.bottom = 0
+        playlistsView.scrollIndicatorInsets.bottom = 0
     }
 }
 

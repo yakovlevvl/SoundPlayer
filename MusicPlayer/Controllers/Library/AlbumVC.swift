@@ -45,6 +45,7 @@ class CompilationVC: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         songsView.reloadData()
+        player.currentSong != nil ? playerBarAppeared() : playerBarDisappeared()
     }
     
     override func viewWillLayoutSubviews() {
@@ -69,6 +70,8 @@ class CompilationVC: UIViewController {
         songsView.dataSource = self
         songsView.register(SongCell.self, forCellWithReuseIdentifier: SongCell.reuseId)
         registerSupplementaryViewClass()
+        
+        setupPlayerBarObserver()
     }
     
     private func layoutViews() {
@@ -101,6 +104,10 @@ class CompilationVC: UIViewController {
         if let baseVC = UIApplication.shared.windows.first?.rootViewController as? BaseVC {
             baseVC.updatePlayerBar()
         }
+    }
+    
+    deinit {
+        removePlayerBarObserver()
     }
 }
 
@@ -138,6 +145,19 @@ extension CompilationVC: UICollectionViewDelegateFlowLayout {
             setDefaultTitle()
             //topBar.hideTitle()
         }
+    }
+}
+
+extension CompilationVC: PlayerBarObservable {
+    
+    func playerBarAppeared() {
+        songsView.contentInset.bottom = PlayerBarProperties.barHeight
+        songsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+    }
+    
+    func playerBarDisappeared() {
+        songsView.contentInset.bottom = 0
+        songsView.scrollIndicatorInsets.bottom = 0
     }
 }
 
@@ -195,10 +215,7 @@ final class PlaylistVC: CompilationVC {
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let song = playlist.songs[indexPath.item]
-        player.playSong(song)
-        player.songsList = Array(playlist.songs)
-        print(player.songsList)
+        player.playSong(with: indexPath.item, in: Array(playlist.songs))
     }
 }
 
@@ -233,9 +250,8 @@ extension PlaylistVC: PlaylistSongActions {
     }
     
     func removeSongFromPlaylist(_ song: Song, at indexPath: IndexPath) {
-        if player.songsList == Array(playlist.songs) {
-            let index = player.songsList.index { $0 == song }
-            player.songsList.remove(at: index!)
+        if player.originalSongsList == Array(playlist.songs) {
+            player.removeSongFromSongsList(with: indexPath.item)
         }
         library.removeSongFromPlaylist(song, playlist: playlist) {
             self.songsView.deleteItems(at: [indexPath])
@@ -255,6 +271,9 @@ extension PlaylistVC: PlaylistViewDelegate {
     }
     
     private func removePlaylist() {
+        if player.originalSongsList == Array(playlist.songs) {
+            player.clearSongsList()
+        }
         library.removePlaylist(playlist) {
             self.updatePlaylistsView()
             self.navigationController?.popViewController(animated: true)
@@ -325,9 +344,7 @@ final class AlbumVC: CompilationVC {
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let song = album.songs[indexPath.item]
-        player.playSong(song)
-        player.songsList = Array(album.songs)
+        player.playSong(with: indexPath.item, in: Array(album.songs))
     }
 }
 
@@ -358,9 +375,8 @@ extension AlbumVC: EditAlbumDelegate {
 extension AlbumVC: AlbumSongActions {
     
     func removeSongFromAlbum(_ song: Song, at indexPath: IndexPath) {
-        if player.songsList == Array(album.songs) {
-            let index = player.songsList.index { $0 == song }
-            player.songsList.remove(at: index!)
+        if player.originalSongsList == Array(album.songs) {
+            player.removeSongFromSongsList(with: indexPath.item)
         }
         library.removeSongFromAlbum(song) {
             self.songsView.deleteItems(at: [indexPath])
@@ -380,13 +396,8 @@ extension AlbumVC: AlbumSongActions {
     }
     
     func removeSong(_ song: Song, at indexPath: IndexPath) {
-        if player.currentSong == song {
-            player.stop()
-        }
         let checkPlaylists = !song.playlists.isEmpty
-        if player.songsList.contains(song) {
-            player.songsList = player.songsList.filter { $0 != song }
-        }
+        player.removeSongFromSongsList(song: song)
         library.removeSong(song) {
             self.songsView.deleteItems(at: [indexPath])
             if checkPlaylists {
@@ -416,6 +427,9 @@ extension AlbumVC: AlbumViewDelegate {
     }
     
     private func removeAlbum() {
+        if player.originalSongsList == Array(album.songs) {
+            player.clearSongsList()
+        }
         library.removeAlbum(album) {
             self.updateAlbumsView()
             self.updatePlayerBar()

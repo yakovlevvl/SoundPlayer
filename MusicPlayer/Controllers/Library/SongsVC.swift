@@ -14,8 +14,6 @@ final class SongsVC: UIViewController {
     
     private let library = Library.main
     
-    weak var delegate: SongsDelegate?
-    
     private let sortButton: UIButton = {
         let button = UIButton(type: .custom)
         button.frame.size = CGSize(width: 60, height: 46)
@@ -59,12 +57,8 @@ final class SongsVC: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         songsView.reloadData()
+        player.currentSong != nil ? playerBarAppeared() : playerBarDisappeared()
     }
-    
-//    override func viewDidAppear(_ animated: Bool) {
-//        super.viewDidAppear(animated)
-//        updateSongsView()
-//    }
     
     private func setupViews() {
         view.backgroundColor = .white
@@ -77,6 +71,8 @@ final class SongsVC: UIViewController {
         songsView.register(SongCell.self, forCellWithReuseIdentifier: SongCell.reuseId)
         
         sortButton.addTarget(self, action: #selector(tapSortButton), for: .touchUpInside)
+        
+        setupPlayerBarObserver()
     }
     
     private func layoutViews() {
@@ -105,11 +101,11 @@ final class SongsVC: UIViewController {
     
     private func setupSortMethod(_ method: Library.SortMethod) {
         if library.songsSortMethod == method { return }
-        let updatePlayerSongsList = player.songsList == library.allSongs
+        let updatePlayerSongsList = player.originalSongsList == library.allSongs
         library.songsSortMethod = method
         updateSongsView()
         if updatePlayerSongsList {
-            player.songsList = library.allSongs
+            player.updateSongsList(with: library.allSongs)
         }
     }
     
@@ -131,6 +127,10 @@ final class SongsVC: UIViewController {
         if let baseVC = UIApplication.shared.windows.first?.rootViewController as? BaseVC {
             baseVC.updatePlayerBar()
         }
+    }
+    
+    deinit {
+        removePlayerBarObserver()
     }
     
 }
@@ -171,10 +171,7 @@ extension SongsVC: UICollectionViewDataSource {
 extension SongsVC: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        library.song(for: indexPath.item) { song in
-            self.player.playSong(song)
-            self.player.songsList = self.library.allSongs
-        }
+        player.playSong(with: indexPath.item, in: library.allSongs)
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -207,15 +204,9 @@ extension SongsVC: SongActions {
                 self.updateAlbumsView()
             }
         }
+        
+        player.removeSongFromSongsList(song: song)
         let checkPlaylists = !song.playlists.isEmpty
-        
-        if player.currentSong == song {
-            player.stop()
-        }
-        
-        if player.songsList.contains(song) {
-            player.songsList = player.songsList.filter { $0 != song }
-        }
     
         library.removeSong(with: indexPath.item) {
             self.songsView.deleteItems(at: [indexPath])
@@ -230,8 +221,17 @@ extension SongsVC: SongActions {
     }
 }
 
-protocol SongsDelegate: class {
+extension SongsVC: PlayerBarObservable {
     
+    func playerBarAppeared() {
+        songsView.contentInset.bottom = PlayerBarProperties.barHeight
+        songsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+    }
     
+    func playerBarDisappeared() {
+        songsView.contentInset.bottom = 0
+        songsView.scrollIndicatorInsets.bottom = 0
+    }
 }
+
 

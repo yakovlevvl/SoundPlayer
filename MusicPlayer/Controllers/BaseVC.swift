@@ -20,11 +20,11 @@ final class BaseVC: UIViewController {
     
     private let contentView = UIView()
     
-    private let libraryNC = UINavigationController(rootViewController: LibraryVC.shared)
-    
     private let browserVC = BrowserVC()
     
-    private let settingsVC = SettingsVC()
+    private let libraryNC = UINavigationController(rootViewController: LibraryVC.shared)
+    
+    private let settingsNC = UINavigationController(rootViewController: SettingsVC())
     
     private let transitionManager = BrowserTransitionManager()
 
@@ -61,8 +61,10 @@ final class BaseVC: UIViewController {
         
         showInitialController()
         
+        settingsNC.isNavigationBarHidden = true
         libraryNC.isNavigationBarHidden = true
         libraryNC.delegate = navigationManager
+        settingsNC.delegate = navigationManager
         browserVC.transitioningDelegate = transitionManager
         browserVC.delegate = libraryNC.viewControllers.first as! LibraryVC
     }
@@ -110,6 +112,7 @@ final class BaseVC: UIViewController {
         UIView.animate(0.48, damping: 0.9, velocity: 1) {
             self.playerBar.frame.origin.y = screenHeight - self.playerBar.frame.height - self.tabBar.frame.height
         }
+        NotificationCenter.default.post(name: .PlayerBarAppeared, object: nil)
     }
     
     func hidePlayerBar() {
@@ -117,6 +120,7 @@ final class BaseVC: UIViewController {
         UIView.animate(0.4) {
             self.playerBar.frame.origin.y = screenHeight
         }
+        NotificationCenter.default.post(name: .PlayerBarDisappeared, object: nil)
     }
     
     func updatePlayerBar() {
@@ -145,7 +149,7 @@ extension BaseVC: TabBarDelegate {
     }
     
     func tapSettingsButton() {
-        showController(settingsVC)
+        showController(settingsNC)
     }
 }
 

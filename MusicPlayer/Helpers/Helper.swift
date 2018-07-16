@@ -205,6 +205,35 @@ extension Array where Element: Hashable {
     }
 }
 
+extension MutableCollection where Index == Int {
+    
+    mutating func shuffle() {
+        
+        if count < 2 { return }
+        
+        for i in startIndex ..< endIndex - 1 {
+            let j = Int(arc4random_uniform(UInt32(endIndex - i))) + i
+            if i != j {
+                self.swapAt(i, j)
+            }
+        }
+    }
+}
+
+extension String {
+    
+    func textSizeForMaxWidth(_ width: CGFloat, font: UIFont) -> CGSize {
+        return NSString(string: self).boundingRect(with: CGSize(width: width, height: CGFloat.greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading, .usesDeviceMetrics], attributes: [NSAttributedStringKey.font : font as Any], context: nil).size
+    }
+}
+
+extension NSAttributedString {
+    
+    func textSizeForMaxWidth(_ width: CGFloat) -> CGSize {
+        return boundingRect(with: CGSize(width: width, height: CGFloat.greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading, .usesDeviceMetrics], context: nil).size
+    }
+}
+
 extension UIView {
     
     func roundCorners(corners: UIRectCorner, radius: CGFloat) {

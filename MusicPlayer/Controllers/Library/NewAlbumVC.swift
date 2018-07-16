@@ -340,12 +340,15 @@ final class EditPlaylistVC: NewPlaylistVC {
         playlistTitle = playlist.title
         artworkImage = playlist.artwork
         topBar.title = "Edit Playlist"
+        
+        setupPlayerBarObserver()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         addedSongs = addedSongs.filter { !$0.isInvalidated }
         songsView.reloadData()
+        Player.main.currentSong != nil ? playerBarAppeared() : playerBarDisappeared()
     }
     
     override func didTapAddMusicButton() {
@@ -365,6 +368,10 @@ final class EditPlaylistVC: NewPlaylistVC {
     
     override func tapCloseButton() {
         editPlaylistDelegate?.tappedCloseButton()
+    }
+    
+    deinit {
+        removePlayerBarObserver()
     }
 }
 
@@ -387,12 +394,15 @@ final class EditAlbumVC: NewAlbumVC {
         albumArtist = album.artist
         artworkImage = album.artwork
         topBar.title = "Edit Album"
+        
+        setupPlayerBarObserver()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         addedSongs = addedSongs.filter { !$0.isInvalidated }
         songsView.reloadData()
+        Player.main.currentSong != nil ? playerBarAppeared() : playerBarDisappeared()
     }
     
     override func didTapAddMusicButton() {
@@ -413,6 +423,10 @@ final class EditAlbumVC: NewAlbumVC {
     override func tapCloseButton() {
         editAlbumDelegate?.tappedCloseButton()
     }
+    
+    deinit {
+        removePlayerBarObserver()
+    }
 }
 
 protocol EditAlbumDelegate: class {
@@ -420,4 +434,32 @@ protocol EditAlbumDelegate: class {
     func editedAlbum()
     func tappedCloseButton()
 }
+
+extension EditAlbumVC: PlayerBarObservable {
+    
+    func playerBarAppeared() {
+        songsView.contentInset.bottom = PlayerBarProperties.barHeight
+        songsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+    }
+    
+    func playerBarDisappeared() {
+        songsView.contentInset.bottom = 0
+        songsView.scrollIndicatorInsets.bottom = 0
+    }
+}
+
+extension EditPlaylistVC: PlayerBarObservable {
+    
+    func playerBarAppeared() {
+        songsView.contentInset.bottom = PlayerBarProperties.barHeight
+        songsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+    }
+    
+    func playerBarDisappeared() {
+        songsView.contentInset.bottom = 0
+        songsView.scrollIndicatorInsets.bottom = 0
+    }
+}
+
+
 

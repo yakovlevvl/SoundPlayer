@@ -32,20 +32,26 @@ final class Player: NSObject {
     
     private var audioPlayer: AVAudioPlayer?
     
-    private(set) var currentSong: Song?
+    var currentSong: Song? {
+        guard let index = currentSongIndex, index < songsList.count else {
+            return nil
+        }
+        return songsList[index]
+    }
     
-    private var currentSongIndex = 0
-    
-    private var shuffleArray = [Song]()
+    private var currentSongIndex: Int?
     
     private var timer: Timer!
     
-    var songsList = [Song]() {
+    private var songsList = [Song]()
+    
+    private(set) var originalSongsList = [Song]() {
         didSet {
-            if songsList != oldValue {
-                if shuffleState {
-                    setupShuffleArray()
-                }
+            if shuffleState {
+                songsList = originalSongsList
+                shuffleSongsList()
+            } else {
+                songsList = originalSongsList
             }
         }
     }
@@ -55,9 +61,17 @@ final class Player: NSObject {
     var shuffleState = false {
         didSet {
             if shuffleState {
-                setupShuffleArray()
+                shuffleSongsList()
             } else {
-                shuffleArray.removeAll()
+                if let currentSong = currentSong {
+                    songsList = originalSongsList
+                    if let index = songsList.index(of: currentSong) {
+                        currentSongIndex = index
+                    }
+                } else {
+                    songsList = originalSongsList
+                    currentSongIndex = 0
+                }
             }
         }
     }
@@ -86,21 +100,25 @@ final class Player: NSObject {
         try? audioSession.setCategory(AVAudioSessionCategoryPlayback)
     }
     
-    func playSong(_ song: Song, with index: Int, in songsList: [Song]) {
-        playSong(song)
+    func playSong(with index: Int, in songsList: [Song]) {
         currentSongIndex = index
-        self.songsList = songsList
+        originalSongsList = songsList
+        if let currentSong = currentSong {
+            playSong(currentSong)
+        }
     }
     
-    func playSong(_ song: Song) {
-        currentSong = song
-        
+    func play(song: Song) {
+        playSong(with: 0, in: [song])
+    }
+    
+    private func playSong(_ song: Song) {
         do {
-            audioPlayer = try AVAudioPlayer(contentsOf: currentSong!.url)
+            audioPlayer = try AVAudioPlayer(contentsOf: song.url)
             audioPlayer?.delegate = self
         } catch {
             stop()
-            delegate?.playerFailedSong(currentSong!)
+            delegate?.playerFailedSong(song)
             return
         }
         
@@ -112,29 +130,36 @@ final class Player: NSObject {
         if !songs.isEmpty {
             repeatState = false
             shuffleState = false
-            songsList = songs
+            originalSongsList = songs
             currentSongIndex = 0
-            playSong(songsList.first!)
+            if let currentSong = currentSong {
+                playSong(currentSong)
+            }
         }
     }
     
     func shuffleAndPlaySongsList(_ songs: [Song]) {
         if !songs.isEmpty {
-            currentSong = nil
-            songsList = songs
+            currentSongIndex = nil
+            originalSongsList = songs
             shuffleState = true
             currentSongIndex = 0
-            playSong(shuffleArray.first!)
+            if let currentSong = currentSong {
+                playSong(currentSong)
+            }
         }
     }
     
-    private func setupShuffleArray() {
-        shuffleArray = songsList.shuffled()
-        guard let currentSong = currentSong else { return }
-        if let index = shuffleArray.index(of: currentSong) {
-            shuffleArray.remove(at: index)
-            shuffleArray.insert(currentSong, at: 0)
+    private func shuffleSongsList() {
+        if let songIndex = currentSongIndex,
+            let currentSong = currentSong {
+            songsList.remove(at: songIndex)
+            songsList.shuffle()
+            songsList.insert(currentSong, at: 0)
+        } else {
+            songsList.shuffle()
         }
+        currentSongIndex = 0
     }
     
     private func startTimer() {
@@ -177,46 +202,37 @@ final class Player: NSObject {
     func stop() {
         audioPlayer?.stop()
         audioPlayer = nil
-        currentSong = nil
+        currentSongIndex = nil
         delegate?.playerStopped()
         clearRemoteCenterInfo()
         stopTimer()
     }
     
     func playNextSong() {
-        let songs: [Song]
+        guard currentSongIndex != nil else { return }
         
-        if shuffleState {
-            songs = shuffleArray
+        currentSongIndex! += 1
+        if currentSongIndex! < songsList.count {
+            if let currentSong = currentSong {
+                playSong(currentSong)
+            }
         } else {
-            songs = songsList
-        }
-        
-        guard let currentSong = currentSong else { return }
-        
-        if let nextSong = songs.after(item: currentSong) {
-            playSong(nextSong)
-        } else {
-            let song = songs.isEmpty ? currentSong : songs.first!
-            playSong(song)
-            pause()
+            currentSongIndex = 0
+            if let currentSong = currentSong {
+                playSong(currentSong)
+                pause()
+            }
         }
     }
     
     func playPreviousSong() {
-        let songs: [Song]
+        guard currentSongIndex != nil else { return }
         
-        if shuffleState {
-            songs = shuffleArray
-        } else {
-            songs = songsList
+        currentSongIndex! -= 1
+        if currentSongIndex! < 0 {
+            currentSongIndex = 0
         }
-        
-        guard let currentSong = currentSong else { return }
-        
-        if let prevSong = songs.before(item: currentSong) {
-            playSong(prevSong)
-        } else {
+        if let currentSong = currentSong {
             playSong(currentSong)
         }
     }
@@ -297,6 +313,64 @@ final class Player: NSObject {
     
     @objc private func audioSessionInterrupted() {
         pause()
+    }
+    
+    func removeSongFromSongsList(song: Song) {
+        if !songsList.contains(song) { return }
+        
+        if currentSong == song {
+            stop()
+        }
+        
+        for (index, eachSong) in songsList.enumerated() {
+            if eachSong == song {
+                songsList.remove(at: index)
+                if currentSongIndex != nil, currentSongIndex! > index {
+                    currentSongIndex! -= 1
+                }
+            }
+        }
+        
+        for (index, eachSong) in originalSongsList.enumerated() {
+            if eachSong == song {
+                originalSongsList.remove(at: index)
+            }
+        }
+    }
+    
+    func removeSongFromSongsList(with index: Int) {
+        if currentSongIndex == index {
+            stop()
+        }
+        
+        var songsArray = originalSongsList
+        songsArray.remove(at: index)
+        originalSongsList = songsArray
+        
+        if !shuffleState, currentSongIndex != nil, currentSongIndex! > index {
+            currentSongIndex! -= 1
+        }
+    }
+    
+    func updateSongsList(with songs: [Song]) {
+        if let currentSong = currentSong, songs.contains(currentSong) {
+            originalSongsList = songs
+            if let index = songsList.index(of: currentSong) {
+                currentSongIndex = index
+            }
+        } else {
+            currentSongIndex = 0
+            originalSongsList = songs
+        }
+    }
+    
+    func clearSongsList() {
+        if let currentSong = currentSong {
+            currentSongIndex = 0
+            originalSongsList = [currentSong]
+        } else {
+            originalSongsList.removeAll()
+        }
     }
     
     deinit {
