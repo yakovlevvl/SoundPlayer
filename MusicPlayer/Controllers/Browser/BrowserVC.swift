@@ -308,6 +308,9 @@ extension BrowserVC: DownloadServiceDelegate {
                 self.downloadsManager.linkDownload(with: id!, to: song)
                 self.delegate?.browserDownloadedSong()
                 self.presentNotificationForDownloadedSong(with: title!, url: location)
+                if SettingsManager.spotlightIsEnabled {
+                    SpotlightManager.indexSong(song)
+                }
             }
         }
     }

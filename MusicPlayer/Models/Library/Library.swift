@@ -47,6 +47,14 @@ class Library {
         return Array(songs)
     }
     
+    var allAlbums: [Album] {
+        return Array(albums)
+    }
+    
+    var allPlaylists: [Playlist] {
+        return Array(playlists)
+    }
+    
     var songsWithoutAlbum: [Song] {
         return Array(songs.filter("album = nil"))
     }
@@ -78,7 +86,7 @@ class Library {
         }
     }
     
-    func addAlbum(with title: String, artist: String, songs: [Song], artwork: UIImage?) {
+    func addAlbum(with title: String, artist: String, songs: [Song], artwork: UIImage?, completion: ((Album) -> ())? = nil) {
         let album = Album(title: title, artist: artist)
         album.artwork = artwork
         let realm = try! Realm()
@@ -89,6 +97,7 @@ class Library {
             realm.add(album)
         }
         realm.refresh()
+        completion?(album)
     }
     
     func editAlbum(_ album: Album, with title: String, artist: String, songs: [Song], artwork: UIImage?) {
@@ -149,7 +158,7 @@ class Library {
         }
     }
     
-    func addPlaylist(with title: String, songs: [Song], artwork: UIImage?) {
+    func addPlaylist(with title: String, songs: [Song], artwork: UIImage?, completion: ((Playlist) -> ())? = nil) {
         let playlist = Playlist(title: title)
         playlist.artwork = artwork
         let realm = try! Realm()
@@ -158,6 +167,7 @@ class Library {
             realm.add(playlist)
         }
         realm.refresh()
+        completion?(playlist)
     }
     
     func editPlaylist(_ playlist: Playlist, with title: String, songs: [Song], artwork: UIImage?) {
@@ -334,8 +344,16 @@ class Library {
         realm.refresh()
     }
     
-    private func song(with id: String) -> Song? {
+    func song(with id: String) -> Song? {
         return try! Realm().object(ofType: Song.self, forPrimaryKey: id)
+    }
+    
+    func album(with id: String) -> Album? {
+        return try! Realm().object(ofType: Album.self, forPrimaryKey: id)
+    }
+    
+    func playlist(with id: String) -> Playlist? {
+        return try! Realm().object(ofType: Playlist.self, forPrimaryKey: id)
     }
 
     

@@ -8,129 +8,105 @@
 
 import UIKit
 
-final class SearchSettingsVC: UIViewController {
+final class SearchSettingsVC: SettingsBaseVC {
     
-    private let topBar: ClearTopBar = {
-        let topBar = ClearTopBar()
+    private enum SearchSettings: String {
+        
+        case enableSpotlight = "Enable Spotlight"
+        
+        case updateSpotlightIndex = "Update Spotlight index"
+    }
+    
+    private let settingsGroups: [SettingsGroup<SearchSettings>] = [
+        SettingsGroup(settings: [.enableSpotlight], description: "Enable Spotlight indexing for songs in your music library."),
+        SettingsGroup(settings: [.updateSpotlightIndex], description: "Update Spotlight index for songs in your music library.\n\nSpotlight allows you to easily find and use the content on your iPhone that match your search sorted by the apps they belong to. You can access Spotlight by going to your home screen and swiping down from the middle of the screen.")]
+
+    override func setupViews() {
+        super.setupViews()
         topBar.title = "Search"
-        topBar.setLeftButtonImage(UIImage(named: "BackIcon"))
-        return topBar
-    }()
-    
-    private let collectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.sectionInset.top = 16
-        layout.minimumLineSpacing = 14
-        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.showsVerticalScrollIndicator = false
-        collectionView.backgroundColor = .white
-        return collectionView
-    }()
-    
-    private let settings: [[(setting: String, description: String)]] = [[("Enable Spotlight", "Enable Spotlight indexing for songs in your music library.")], [("Update Spotlight index", "Update Spotlight index for songs in your music library.")]]
-    
-    private let descriptions = ["Enable Spotlight indexing for songs in your music library.", "Update Spotlight index for songs in your music library."]
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupViews()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        Player.main.currentSong != nil ? playerBarAppeared() : playerBarDisappeared()
-    }
-    
-    override func viewWillLayoutSubviews() {
-        super.viewWillLayoutSubviews()
-        layoutViews()
-    }
-    
-    private func setupViews() {
-        view.backgroundColor = .white
-        
-        view.addSubview(collectionView)
-        view.addSubview(topBar)
-        
-        topBar.onLeftButtonTapped = { [unowned self] in
-            self.tapBackButton()
-        }
-        
-        collectionView.delegate = self
-        collectionView.dataSource = self
-        
-        collectionView.register(SettingCell.self, forCellWithReuseIdentifier: SettingCell.reuseId)
-        collectionView.register(SettingDescriptionView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionFooter, withReuseIdentifier: SettingDescriptionView.reuseId)
-        
-        setupPlayerBarObserver()
-    }
-    
-    private func layoutViews() {
-        topBar.frame.origin = .zero
-        topBar.frame.size = CGSize(width: view.frame.width, height: 76)
-        
-        collectionView.frame = view.bounds
-        collectionView.contentInset.top = topBar.frame.height - 14
-        collectionView.scrollIndicatorInsets.top = collectionView.contentInset.top
-    }
-    
-    private func tapBackButton() {
-        navigationController?.popViewController(animated: true)
-    }
-    
-    deinit {
-        removePlayerBarObserver()
+    private func updateSpotlightIndex() {
+        SpotlightManager.indexAllData()
     }
 }
 
-extension SearchSettingsVC: UICollectionViewDataSource {
+extension SearchSettingsVC: SwitchSettingCellDelegate {
     
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return settings.count
+    func switchValueChanged(isOn: Bool, cell: SwitchSettingCell) {
+        guard let indexPath = collectionView.indexPath(for: cell) else { return }
+        let setting = settingsGroups[indexPath.section].settings[indexPath.item]
+        if setting == .enableSpotlight {
+            SettingsManager.spotlightIsEnabled = isOn
+            if isOn {
+                updateSpotlightIndex()
+            } else {
+                SpotlightManager.removeAllData()
+            }
+            for index in 0..<settingsGroups.count {
+                if index == indexPath.section { continue }
+                collectionView.reloadSections(IndexSet(integer: index))
+            }
+        }
+    }
+}
+
+extension SearchSettingsVC {
+    
+    override func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return settingsGroups.count
     }
     
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return settings[section].count
+    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return settingsGroups[section].settings.count
     }
     
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SettingCell.reuseId, for: indexPath) as! SettingCell
-        //cell.setupTitle(settings[indexPath.section][indexPath.item])
-        return cell
+    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let setting = settingsGroups[indexPath.section].settings[indexPath.item]
+        switch setting {
+        case .enableSpotlight :
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SwitchSettingCell.reuseId, for: indexPath) as! SwitchSettingCell
+            cell.setupTitle(setting.rawValue)
+            cell.setSwitchOn(SettingsManager.spotlightIsEnabled)
+            cell.delegate = self
+            return cell
+        case .updateSpotlightIndex :
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SettingCell.reuseId, for: indexPath) as! SettingCell
+            cell.setupTitle(setting.rawValue)
+            cell.setupTitleColor(SettingsManager.spotlightIsEnabled ? .black : .lightGray)
+            cell.scaleByTap = SettingsManager.spotlightIsEnabled
+            return cell
+        }
     }
     
-    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+    override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         let view = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionFooter, withReuseIdentifier: SettingDescriptionView.reuseId, for: indexPath) as! SettingDescriptionView
-        view.setupDescription(descriptions[indexPath.item])
+        view.setupDescription(settingsGroups[indexPath.section].description)
         return view
     }
 }
 
-extension SearchSettingsVC: UICollectionViewDelegateFlowLayout {
+extension SearchSettingsVC {
     
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let setting = settingsGroups[indexPath.section].settings[indexPath.item]
+        switch setting {
+        case .enableSpotlight : break
+        case .updateSpotlightIndex :
+            if SettingsManager.spotlightIsEnabled {
+                updateSpotlightIndex()
+            }
+        }
     }
     
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+    override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return CGSize(width: view.frame.width - 32, height: 70)
     }
     
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
-        let textSize = descriptions[section].textSizeForMaxWidth(view.frame.width - 2*SettingDescriptionView.textHorizontalInset, font: SettingDescriptionView.font!)
+    override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
+        let textSize = settingsGroups[section].description.textSizeForMaxWidth(view.frame.width - 2*SettingDescriptionView.textHorizontalInset, font: SettingDescriptionView.font!)
         return CGSize(width: view.frame.width, height: textSize.height + 2*SettingDescriptionView.textVerticalInset)
     }
 }
 
-extension SearchSettingsVC: PlayerBarObservable {
-    
-    func playerBarAppeared() {
-        collectionView.contentInset.bottom = PlayerBarProperties.barHeight
-        collectionView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
-    }
-    
-    func playerBarDisappeared() {
-        collectionView.contentInset.bottom = 0
-        collectionView.scrollIndicatorInsets.bottom = 0
-    }
-}
+

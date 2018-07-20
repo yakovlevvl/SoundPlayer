@@ -28,14 +28,19 @@ enum Colors {
     static let red = UIColor(hex: "D0021B")
     static let clearRed = UIColor(hex: "D0021B", alpha: 0.3)
     static let roundButtonColor = UIColor(hex: "D82C41")
+    static let switchColor = UIColor(hex: "D0021B", alpha: 0.7)
     static let gray = UIColor(r: 236, g: 236, b: 236)
 }
 
 enum UserDefaultsKeys {
     
+    static let notFirstLaunch = "notFirstLaunch"
+    
     static let songsSortMethod = "songsSortMethod"
     static let albumsSortMethod = "albumsSortMethod"
     static let playlistsSortMethod = "playlistsSortMethod"
+    
+    static let enableSpotlight = "enableSpotlight"
 }
 
 enum PlayerBarProperties {
@@ -293,6 +298,23 @@ enum ScreenWidth {
     static let iPhoneX: CGFloat = 375
 }
 
+enum Device: CGFloat {
+    
+    case iPhone5 = 320
+    case iPhone6, iPhoneX = 375
+    case iPhone6Plus = 414
+}
+
+var currentDevice: Device {
+    switch screenWidth {
+    case ScreenWidth.iPhone5 : return .iPhone5
+    case ScreenWidth.iPhone6 : return .iPhone6
+    case ScreenWidth.iPhoneX : return .iPhoneX
+    case ScreenWidth.iPhone6Plus : return .iPhone6Plus
+    default : return .iPhoneX
+    }
+}
+
 struct Screen {
     
     static var is4inch: Bool {
@@ -412,7 +434,7 @@ class ImageView: UIView {
 
 extension UIImage {
     
-    func resize(to size: CGSize, completion: @escaping (UIImage) -> ()) {
+    func resizeAsync(to size: CGSize, completion: @escaping (UIImage) -> ()) {
         guard size.width < self.size.width, size.height < self.size.height else {
             return completion(self)
         }
@@ -436,6 +458,31 @@ extension UIImage {
                 completion(resizedImage)
             }
         }
+    }
+    
+    func resize(to size: CGSize) -> UIImage {
+        guard size.width < self.size.width, size.height < self.size.height else {
+            return self
+        }
+        
+        let width = size.width*UIScreen.main.scale
+        let height = size.height*UIScreen.main.scale
+        
+        let rect = CGRect(x: 0, y: 0, width: width, height: height)
+        
+        let context = CGContext(data: nil, width: Int(width), height: Int(height),
+                                bitsPerComponent: 8, bytesPerRow: Int(width)*4, space: CGColorSpaceCreateDeviceRGB(),
+                                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        
+        context.draw(self.cgImage!, in: rect)
+        
+        let resizedImage = UIImage(cgImage: context.makeImage()!)
+        
+        return resizedImage
+    }
+    
+    func imageData() -> Data? {
+        return UIImageJPEGRepresentation(self, 1)
     }
 }
 

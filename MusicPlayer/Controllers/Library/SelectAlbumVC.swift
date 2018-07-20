@@ -131,6 +131,9 @@ final class SelectAlbumVC: SelectCompilationVC {
         library.album(for: indexPath.item) { album in
             self.library.addSong(self.song, to: album)
             self.dismiss(animated: true)
+            if SettingsManager.spotlightIsEnabled {
+                SpotlightManager.indexSong(self.song)
+            }
         }
     }
     

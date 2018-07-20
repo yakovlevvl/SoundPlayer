@@ -326,18 +326,27 @@ extension SearchVC: SongActions {
             if self.player.currentSong == song {
                 self.updatePlayerBar()
             }
+            if SettingsManager.spotlightIsEnabled {
+                SpotlightManager.indexSong(song)
+            }
         }
     }
     
     func removeSong(_ song: Song, at indexPath: IndexPath) {
         if let album = song.album, album.songs.count == 1 {
             let reloadAlbums = albumsOutput.contains(album)
+            if SettingsManager.spotlightIsEnabled {
+                SpotlightManager.removeAlbum(album)
+            }
             library.removeAlbum(album) {
                 self.updateAlbumsView()
                 if reloadAlbums {
                     self.updateAlbumsSection()
                 }
             }
+        }
+        if SettingsManager.spotlightIsEnabled {
+            SpotlightManager.removeSong(song)
         }
         
         player.removeSongFromSongsList(song: song)

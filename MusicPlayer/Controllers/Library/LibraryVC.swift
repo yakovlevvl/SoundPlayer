@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CoreSpotlight
 
 final class LibraryVC: UIViewController {
     
@@ -38,7 +39,6 @@ final class LibraryVC: UIViewController {
     
     private var searchPresenter: FadeChildControllerPresenter!
     
-    
     static let shared = LibraryVC(nibName: nil, bundle: nil)
     
     private override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
@@ -48,7 +48,6 @@ final class LibraryVC: UIViewController {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -116,7 +115,6 @@ final class LibraryVC: UIViewController {
         }
     }
 
-    
 }
 
 extension LibraryVC: UIScrollViewDelegate {
@@ -208,6 +206,37 @@ extension LibraryVC: BrowserDelegate {
     
     func browserDownloadedSong() {
         songsVC.updateSongsView()
+    }
+}
+
+extension LibraryVC {
+    
+    override func restoreUserActivityState(_ activity: NSUserActivity) {
+        if activity.activityType == CSSearchableItemActionType {
+            guard let userInfo = activity.userInfo else { return }
+            
+            let uniqueId = userInfo[CSSearchableItemActivityIdentifier] as! String
+            let uniqueIdComponents = uniqueId.components(separatedBy: ":")
+            
+            guard uniqueIdComponents.count == 2 else { return }
+            
+            let itemId = uniqueIdComponents.last!
+            guard let domainId = SpotlightDomainId(rawValue: uniqueIdComponents.first!) else { return }
+            
+            switch domainId {
+            case .songs :
+                guard let song = library.song(with: itemId) else { return }
+                didSelectSong(song)
+            case .albums :
+                guard let album = library.album(with: itemId) else { return }
+                navigationController!.popToViewController(self, animated: true)
+                didSelectAlbum(album)
+            case .playlists :
+                guard let playlist = library.playlist(with: itemId) else { return }
+                navigationController!.popToViewController(self, animated: true)
+                didSelectPlaylist(playlist)
+            }
+        }
     }
 }
 

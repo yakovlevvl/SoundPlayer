@@ -246,6 +246,9 @@ extension PlaylistVC: PlaylistSongActions {
             if self.player.currentSong == song {
                 self.updatePlayerBar()
             }
+            if SettingsManager.spotlightIsEnabled {
+                SpotlightManager.indexSong(song)
+            }
         }
     }
     
@@ -273,6 +276,9 @@ extension PlaylistVC: PlaylistViewDelegate {
     private func removePlaylist() {
         if player.originalSongsList == Array(playlist.songs) {
             player.clearSongsList()
+        }
+        if SettingsManager.spotlightIsEnabled {
+            SpotlightManager.removePlaylist(playlist)
         }
         library.removePlaylist(playlist) {
             self.updatePlaylistsView()
@@ -383,6 +389,9 @@ extension AlbumVC: AlbumSongActions {
             if self.player.currentSong == song {
                 self.updatePlayerBar()
             }
+            if SettingsManager.spotlightIsEnabled {
+                SpotlightManager.indexSong(song)
+            }
         }
     }
     
@@ -392,12 +401,18 @@ extension AlbumVC: AlbumSongActions {
             if self.player.currentSong == song {
                 self.updatePlayerBar()
             }
+            if SettingsManager.spotlightIsEnabled {
+                SpotlightManager.indexSong(song)
+            }
         }
     }
     
     func removeSong(_ song: Song, at indexPath: IndexPath) {
         let checkPlaylists = !song.playlists.isEmpty
         player.removeSongFromSongsList(song: song)
+        if SettingsManager.spotlightIsEnabled {
+            SpotlightManager.removeSong(song)
+        }
         library.removeSong(song) {
             self.songsView.deleteItems(at: [indexPath])
             if checkPlaylists {
@@ -427,13 +442,20 @@ extension AlbumVC: AlbumViewDelegate {
     }
     
     private func removeAlbum() {
-        if player.originalSongsList == Array(album.songs) {
+        let albumSongs = Array(album.songs)
+        if player.originalSongsList == albumSongs {
             player.clearSongsList()
+        }
+        if SettingsManager.spotlightIsEnabled {
+            SpotlightManager.removeAlbum(album)
         }
         library.removeAlbum(album) {
             self.updateAlbumsView()
             self.updatePlayerBar()
             self.navigationController?.popViewController(animated: true)
+            if SettingsManager.spotlightIsEnabled {
+                SpotlightManager.indexSongs(albumSongs)
+            }
         }
     }
     

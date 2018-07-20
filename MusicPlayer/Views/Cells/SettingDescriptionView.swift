@@ -24,7 +24,7 @@ final class SettingDescriptionView: UICollectionReusableView {
     
     static let font = UIFont(name: Fonts.general, size: 18)
     
-    static let textHorizontalInset: CGFloat = 20
+    static let textHorizontalInset: CGFloat = 24
     
     static let textVerticalInset: CGFloat = 20
     

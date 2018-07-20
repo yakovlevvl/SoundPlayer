@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import CoreSpotlight
 import UserNotifications
 
 @UIApplicationMain
@@ -23,23 +24,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         
         let center = UNUserNotificationCenter.current()
-        
         center.delegate = notificationDelegate
-        
         let options: UNAuthorizationOptions = [.alert, .sound]
-        
         center.requestAuthorization(options: options) { granted, error in }
         
         let config = Realm.Configuration(
             // Set the new schema version. This must be greater than the previously used
             // version (if you've never set a schema version before, the version is 0).
-            schemaVersion: 0,  //6
+            schemaVersion: 2,
 
             // Set the block which will be called automatically when opening a Realm with
             // a schema version lower than the one set above
             migrationBlock: { migration, oldSchemaVersion in
                 // We haven’t migrated anything yet, so oldSchemaVersion == 0
-                if oldSchemaVersion < 0 {
+                if oldSchemaVersion < 2 {
                     // Nothing to do!
                     // Realm will automatically detect new properties and removed properties
                     // And will update the schema on disk automatically
@@ -49,10 +47,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Tell Realm to use this new configuration object for the default Realm
         Realm.Configuration.defaultConfiguration = config
         
-//        let realm = try! Realm()
-//        try! realm.write {
-//            realm.deleteAll()
-//        }
+        if !UserDefaults.standard.bool(forKey: UserDefaultsKeys.notFirstLaunch) {
+            UserDefaults.standard.set(true, forKey: UserDefaultsKeys.notFirstLaunch)
+            
+            SettingsManager.spotlightIsEnabled = true
+        }
+        
+        if !SettingsManager.spotlightIsEnabled {
+            SpotlightManager.removeAllData()
+        }
         
         window = UIWindow()
         window?.rootViewController = BaseVC()
@@ -64,6 +67,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
         print("~handleEventsForBackgroundURLSession~")
         backgroundCompletionHandler = completionHandler
+    }
+    
+    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([Any]?) -> Void) -> Bool {
+        LibraryVC.shared.restoreUserActivityState(userActivity)
+        return true
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

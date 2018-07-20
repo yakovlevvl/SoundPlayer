@@ -60,7 +60,7 @@ final class SettingsVC: UIViewController {
         collectionView.delegate = self
         collectionView.dataSource = self
         
-        collectionView.register(SettingCell.self, forCellWithReuseIdentifier: SettingCell.reuseId)
+        collectionView.register(NavigationSettingCell.self, forCellWithReuseIdentifier: NavigationSettingCell.reuseId)
         collectionView.register(UICollectionReusableView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: headerId)
     
         setupPlayerBarObserver()
@@ -91,7 +91,7 @@ extension SettingsVC: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SettingCell.reuseId, for: indexPath) as! SettingCell
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NavigationSettingCell.reuseId, for: indexPath) as! NavigationSettingCell
         cell.setupTitle(settings[indexPath.section][indexPath.item])
         return cell
     }
@@ -110,7 +110,7 @@ extension SettingsVC: UICollectionViewDelegateFlowLayout {
             case 0: navigationController?.pushViewController(SearchSettingsVC(), animated: true)
                 
             default:
-                break
+                navigationController?.pushViewController(SettingsBaseVC(), animated: true)
             }
         }
     }

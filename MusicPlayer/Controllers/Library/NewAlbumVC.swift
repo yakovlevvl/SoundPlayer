@@ -135,7 +135,11 @@ class NewPlaylistVC: UIViewController {
     }
     
     fileprivate func tapDoneButton() {
-        Library.main.addPlaylist(with: playlistTitle, songs: addedSongs, artwork: artworkImage)
+        Library.main.addPlaylist(with: playlistTitle, songs: addedSongs, artwork: artworkImage) { playlist in
+            if SettingsManager.spotlightIsEnabled {
+                SpotlightManager.indexPlaylist(playlist)
+            }
+        }
         dismiss(animated: true)
         delegate?.addedNewPlaylist()
     }
@@ -290,8 +294,13 @@ class NewAlbumVC: NewPlaylistVC {
     }
 
     override func tapDoneButton() {
-        Library.main.addAlbum(with: playlistTitle,
-            artist: albumArtist, songs: addedSongs, artwork: artworkImage)
+        Library.main.addAlbum(with: playlistTitle, artist: albumArtist,
+            songs: addedSongs, artwork: artworkImage) { album in
+            if SettingsManager.spotlightIsEnabled {
+                SpotlightManager.indexAlbum(album)
+                SpotlightManager.indexSongs(self.addedSongs)
+            }
+        }
         dismiss(animated: true)
         newAlbumDelegate?.addedNewAlbum()
     }
@@ -364,6 +373,9 @@ final class EditPlaylistVC: NewPlaylistVC {
         Library.main.editPlaylist(playlist, with: playlistTitle,
             songs: addedSongs, artwork: artworkImage)
         editPlaylistDelegate?.editedPlaylist()
+        if SettingsManager.spotlightIsEnabled {
+            SpotlightManager.indexPlaylist(playlist)
+        }
     }
     
     override func tapCloseButton() {
@@ -418,6 +430,10 @@ final class EditAlbumVC: NewAlbumVC {
         Library.main.editAlbum(album, with: playlistTitle,
             artist: albumArtist, songs: addedSongs, artwork: artworkImage)
         editAlbumDelegate?.editedAlbum()
+        if SettingsManager.spotlightIsEnabled {
+            SpotlightManager.indexAlbum(album)
+            SpotlightManager.indexSongs(addedSongs)
+        }
     }
     
     override func tapCloseButton() {

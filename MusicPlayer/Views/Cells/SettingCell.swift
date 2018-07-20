@@ -2,39 +2,35 @@
 //  SettingCell.swift
 //  MusicPlayer
 //
-//  Created by Vladyslav Yakovlev on 14.07.2018.
+//  Created by Vladyslav Yakovlev on 18.07.2018.
 //  Copyright © 2018 Vladyslav Yakovlev. All rights reserved.
 //
 
 import UIKit
 
-final class SettingCell: UICollectionViewCell {
+class SettingCell: UICollectionViewCell {
     
-    private let titleLabel: UILabel = {
+    let titleLabel: UILabel = {
         let label = UILabel()
         label.frame.size.height = 28
         label.font = UIFont(name: Fonts.general, size: 20)
         return label
     }()
     
-    private let nextIcon: UIImageView = {
-        let icon = UIImageView()
-        icon.frame.size = CGSize(width: 30, height: 30)
-        icon.image = UIImage(named: "NextSmall")
-        icon.contentMode = .center
-        return icon
-    }()
+    class var reuseId: String {
+        return "SettingCell"
+    }
     
-    static let reuseId = "SettingCell"
+    var scaleByTap = false
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
+        layoutViews()
     }
     
-    private func setupViews() {
+    func setupViews() {
         contentView.addSubview(titleLabel)
-        contentView.addSubview(nextIcon)
         
         backgroundColor = .clear
         contentView.backgroundColor = .white
@@ -43,17 +39,12 @@ final class SettingCell: UICollectionViewCell {
         contentView.clipsToBounds = true
         
         setupShadow()
-        
-        layoutViews()
     }
     
-    private func layoutViews() {
-        nextIcon.center.y = contentView.center.y
-        nextIcon.frame.origin.x = contentView.frame.width - nextIcon.frame.width - 14
-        
+    func layoutViews() {
         titleLabel.center.y = contentView.center.y
         titleLabel.frame.origin.x = 30
-        titleLabel.frame.size.width = nextIcon.frame.minX - titleLabel.frame.minX - 14
+        titleLabel.frame.size.width = frame.width - titleLabel.frame.minX - 20
     }
     
     private func setupShadow() {
@@ -66,6 +57,25 @@ final class SettingCell: UICollectionViewCell {
     
     func setupTitle(_ title: String) {
         titleLabel.text = title
+    }
+    
+    func setupTitleColor(_ color: UIColor) {
+        titleLabel.textColor = color
+    }
+    
+    override var isHighlighted: Bool {
+        didSet {
+            if !scaleByTap { return }
+            if isHighlighted {
+                UIView.animate(0.2) {
+                    self.transform = CGAffineTransform(scaleX: 0.92, y: 0.92)
+                }
+            } else {
+                UIView.animate(0.4) {
+                    self.transform = .identity
+                }
+            }
+        }
     }
     
     required init?(coder aDecoder: NSCoder) {

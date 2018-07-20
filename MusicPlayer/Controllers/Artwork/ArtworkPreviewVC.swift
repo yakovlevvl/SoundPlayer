@@ -148,7 +148,7 @@ final class ArtworkPreviewVC: UIViewController {
         let y = (scrollView.contentOffset.y + frameLayer.frame.origin.y) * scale
         let cropFrame = CGRect(x: x, y: y, width: width, height: height)
         let croppedImage = UIImage(cgImage: artwork.cgImage!.cropping(to: cropFrame)!)
-        croppedImage.resize(to: CGSize(width: 240, height: 240)) { image in
+        croppedImage.resizeAsync(to: CGSize(width: 240, height: 240)) { image in
             completion(image)
         }  /////160
     }
