@@ -18,4 +18,13 @@ final class SettingsManager {
             UserDefaults.standard.set(newValue, forKey: UserDefaultsKeys.enableSpotlight)
         }
     }
+    
+    static var browserNeedReset: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: UserDefaultsKeys.browserNeedReset)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: UserDefaultsKeys.browserNeedReset)
+        }
+    }
 }

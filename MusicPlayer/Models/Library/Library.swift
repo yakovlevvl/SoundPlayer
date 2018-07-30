@@ -248,6 +248,7 @@ class Library {
     }
     
     func removeSong(_ song: Song, completion: @escaping () -> ()) {
+        song.removeSongFile()
         let realm = try! Realm()
         try! realm.write {
             realm.delete(song)

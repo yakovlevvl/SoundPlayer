@@ -105,6 +105,22 @@ final class SongCell: BaseSongCell {
     @objc private func tapMoreButton() {
         delegate?.tapMoreButton(self)
     }
+    
+    override var isHighlighted: Bool {
+        didSet {
+            if isHighlighted {
+                UIView.animate(0.2) {
+                    self.transform = CGAffineTransform(scaleX: 0.92, y: 0.92)
+                    self.contentView.backgroundColor = UIColor(white: 1, alpha: 0.6)
+                }
+            } else {
+                UIView.animate(0.4) {
+                    self.transform = .identity
+                    self.contentView.backgroundColor = .white
+                }
+            }
+        }
+    }
 }
 
 protocol SongCellDelegate: class {

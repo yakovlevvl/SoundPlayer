@@ -30,7 +30,7 @@ final class BaseVC: UIViewController {
 
     private let navigationManager = NavigationTransitionManager()
     
-    private let verticalTransitionManager = VerticalTransitionManager()
+    private var verticalTransitionManager: VerticalTransitionManager! 
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -92,15 +92,6 @@ final class BaseVC: UIViewController {
         childViewControllers.first?.removeFromParent()
         addChildController(vc, parentView: contentView)
         vc.view.frame = contentView.bounds
-        
-        //vc.view.alpha = 0
-        
-//        UIView.animate(0.18, animation: {
-//            vc.view.alpha = 1
-//        }, completion: { finished in
-//            if !finished { return }
-//
-//        })
     }
     
     private func showInitialController() {
@@ -166,7 +157,7 @@ extension BaseVC: MiniPlayerBarDelegate {
     func tapPlayerBar() {
         let playerVC = PlayerVC()
         self.playerVC = playerVC
-        //verticalTransitionManager.cornerRadius = 8
+        verticalTransitionManager = VerticalTransitionManager(viewController: playerVC)
         playerVC.transitioningDelegate = verticalTransitionManager
         present(playerVC, animated: true)
     }

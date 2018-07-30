@@ -8,7 +8,7 @@
 
 import RealmSwift
 
-class DownloadsManager {
+final class DownloadsManager {
     
     private let realmQueue = DispatchQueue(label: "com.MusicPlayer.realmQueue", qos: .userInteractive, attributes: .concurrent)
 

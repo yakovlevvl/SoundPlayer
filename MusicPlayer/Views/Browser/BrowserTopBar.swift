@@ -97,6 +97,10 @@ final class BrowserTopBar: UIView {
         searchField.frame.size.width = loadControlButton.frame.minX - searchField.frame.minX - 6
     }
     
+    func hideLoadControlButton() {
+        loadControlButton.alpha = 0
+    }
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

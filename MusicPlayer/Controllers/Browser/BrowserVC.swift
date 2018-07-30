@@ -64,6 +64,14 @@ final class BrowserVC: UIViewController {
         setupViews()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if SettingsManager.browserNeedReset {
+            SettingsManager.browserNeedReset = false
+            //loadLastUrl()
+        }
+    }
+    
     private func setupViews() {
         view.backgroundColor = .white
         
@@ -115,7 +123,7 @@ final class BrowserVC: UIViewController {
     }
     
     private func loadLastUrl() {
-        if let url = UserDefaults.standard.url(forKey: "browserLastUrl") {
+        if let url = UserDefaults.standard.url(forKey: UserDefaultsKeys.browserLastUrl) {
             let request = URLRequest(url: url)
             webView.load(request)
         } else {
@@ -307,7 +315,7 @@ extension BrowserVC: DownloadServiceDelegate {
             Library.main.addSong(with: location, title: title!) { song in
                 self.downloadsManager.linkDownload(with: id!, to: song)
                 self.delegate?.browserDownloadedSong()
-                self.presentNotificationForDownloadedSong(with: title!, url: location)
+                NotificationService.main.presentNotificationForDownloadedSong(with: title!, url: location)
                 if SettingsManager.spotlightIsEnabled {
                     SpotlightManager.indexSong(song)
                 }
@@ -585,28 +593,6 @@ extension BrowserVC: UIScrollViewDelegate {
             self.webView.scrollView.scrollIndicatorInsets.bottom = 0
             self.topBar.transform = CGAffineTransform(translationX: 0, y: -self.topBar.frame.height)
             self.toolBar.transform = CGAffineTransform(translationX: 0, y: self.toolBar.frame.height)
-        }
-    }
-}
-
-extension BrowserVC {
-    
-    func presentNotificationForDownloadedSong(with title: String, url: URL) {
-        let center = UNUserNotificationCenter.current()
-        center.getNotificationSettings { settings in
-            guard settings.authorizationStatus == .authorized else {
-                return
-            }
-            let content = UNMutableNotificationContent()
-            content.body = "Song \"\(title)\" has  been downloaded"
-            content.sound = UNNotificationSound.default()
-        
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
-            
-            let id = UUID().uuidString
-            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-            
-            center.add(request)
         }
     }
 }

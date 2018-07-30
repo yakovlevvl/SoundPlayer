@@ -1,8 +1,8 @@
 //
-//  DownloadsTransitionAnimator.swift
+//  VerticalTransitionAnimator.swift
 //  MusicPlayer
 //
-//  Created by Vladyslav Yakovlev on 28.02.2018.
+//  Created by Vladyslav Yakovlev on 30.07.2018.
 //  Copyright © 2018 Vladyslav Yakovlev. All rights reserved.
 //
 
@@ -31,12 +31,12 @@ extension VerticalTransitionAnimator: UIViewControllerAnimatedTransitioning {
             containerView.addSubview(toView)
             toView.frame.origin.y = screenHeight
             animatePresenting(fromView: fromView, toView: toView) {
-                transitionContext.completeTransition(true)
+                transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
             }
         } else {
             containerView.insertSubview(toView, at: 0)
             animateDismissing(fromView: fromView, toView: toView) {
-                transitionContext.completeTransition(true)
+                transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
             }
         }
     }
@@ -48,7 +48,9 @@ extension VerticalTransitionAnimator: UIViewControllerAnimatedTransitioning {
             fromView.transform = CGAffineTransform(scaleX: 0.94, y: 0.94)
             fromView.layer.cornerRadius = self.cornerRadius
             toView.frame.origin.y = 0
-            toView.layer.cornerRadius = self.cornerRadius
+            if self.cornerRadius != 0 {
+                toView.layer.cornerRadius = self.cornerRadius
+            }
         }, completion: { _ in
             completion()
         })
@@ -64,25 +66,3 @@ extension VerticalTransitionAnimator: UIViewControllerAnimatedTransitioning {
         })
     }
 }
-
-class VerticalTransitionManager: NSObject {
-    
-    var cornerRadius: CGFloat = 0
-    
-    let animator = VerticalTransitionAnimator()
-}
-
-extension VerticalTransitionManager: UIViewControllerTransitioningDelegate {
-    
-    func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-        animator.cornerRadius = cornerRadius
-        animator.presenting = true
-        return animator
-    }
-    
-    func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-        animator.presenting = false
-        return animator
-    }
-}
-

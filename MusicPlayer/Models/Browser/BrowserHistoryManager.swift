@@ -8,7 +8,7 @@
 
 import RealmSwift
 
-class BrowserHistoryManager {
+final class BrowserHistoryManager {
     
     private let realmQueue = DispatchQueue(label: "com.MusicPlayer.historyQueue", qos: .userInteractive, attributes: .concurrent)
     
@@ -57,7 +57,7 @@ class BrowserHistoryManager {
         }
     }
     
-    func clearHistory(completion: @escaping () -> ()) {
+    func clearHistory(completion: @escaping () -> () = {}) {
         realmQueue.async {
             guard let realm = try? Realm() else { return }
             let items = realm.objects(BrowserHistoryItem.self)

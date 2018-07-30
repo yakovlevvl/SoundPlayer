@@ -104,7 +104,6 @@ final class PlayerVC: UIViewController {
         super.viewDidLoad()
         setupViews()
         layoutViews()
-        view.roundCorners(corners: [.topLeft, .topRight], radius: 8)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -149,6 +148,8 @@ final class PlayerVC: UIViewController {
         moreButton.addTarget(self, action: #selector(tapMoreButton), for: .touchUpInside)
         
         closeButton.addTarget(self, action: #selector(tapCloseButton), for: .touchUpInside)
+        
+        view.roundCorners(corners: [.topRight, .topLeft], radius: 10)
     }
     
     private func layoutViews() {
@@ -305,6 +306,7 @@ final class PlayerVC: UIViewController {
     
     deinit {
         print("PlayerVC deinit")
+        print(view.gestureRecognizers?.count)
     }
 }
 

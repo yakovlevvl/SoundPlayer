@@ -81,7 +81,7 @@ extension SearchSettingsVC {
     
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         let view = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionFooter, withReuseIdentifier: SettingDescriptionView.reuseId, for: indexPath) as! SettingDescriptionView
-        view.setupDescription(settingsGroups[indexPath.section].description)
+        view.setupDescription(settingsGroups[indexPath.section].description!)
         return view
     }
 }
@@ -104,7 +104,7 @@ extension SearchSettingsVC {
     }
     
     override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
-        let textSize = settingsGroups[section].description.textSizeForMaxWidth(view.frame.width - 2*SettingDescriptionView.textHorizontalInset, font: SettingDescriptionView.font!)
+        let textSize = settingsGroups[section].description!.textSizeForMaxWidth(view.frame.width - 2*SettingDescriptionView.textHorizontalInset, font: SettingDescriptionView.font!)
         return CGSize(width: view.frame.width, height: textSize.height + 2*SettingDescriptionView.textVerticalInset)
     }
 }

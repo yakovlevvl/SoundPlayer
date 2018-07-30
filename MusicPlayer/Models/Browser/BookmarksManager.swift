@@ -8,7 +8,7 @@
 
 import RealmSwift
 
-class BookmarksManager {
+final class BookmarksManager {
     
     private let realmQueue = DispatchQueue(label: "com.MusicPlayer.bookmarksQueue", qos: .userInteractive, attributes: .concurrent)
     

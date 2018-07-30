@@ -12,5 +12,10 @@ struct SettingsGroup<E: RawRepresentable> where E.RawValue == String {
     
     let settings: [E]
     
-    let description: String
+    let description: String?
+    
+    init(settings: [E], description: String? = nil) {
+        self.settings = settings
+        self.description = description
+    }
 }

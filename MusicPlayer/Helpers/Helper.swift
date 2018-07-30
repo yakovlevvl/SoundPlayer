@@ -8,7 +8,6 @@
 
 import UIKit
 import Photos
-import GameplayKit.GKRandomSource
 
 enum Fonts {
     
@@ -35,12 +34,16 @@ enum Colors {
 enum UserDefaultsKeys {
     
     static let notFirstLaunch = "notFirstLaunch"
+    static let browserLastUrl = "browserLastUrl"
     
     static let songsSortMethod = "songsSortMethod"
     static let albumsSortMethod = "albumsSortMethod"
     static let playlistsSortMethod = "playlistsSortMethod"
     
     static let enableSpotlight = "enableSpotlight"
+    static let browserNeedReset = "browserNeedReset"
+    
+    static let appOpenedCount = "appOpenedCount"
 }
 
 enum PlayerBarProperties {
@@ -204,10 +207,6 @@ extension Array where Element: Hashable {
         }
         return nil
     }
-    
-    func shuffled() -> [Element] {
-        return GKRandomSource.sharedRandom().arrayByShufflingObjects(in: self) as! [Element]
-    }
 }
 
 extension MutableCollection where Index == Int {
@@ -216,10 +215,10 @@ extension MutableCollection where Index == Int {
         
         if count < 2 { return }
         
-        for i in startIndex ..< endIndex - 1 {
-            let j = Int(arc4random_uniform(UInt32(endIndex - i))) + i
+        for i in stride(from: count - 1, through: 1, by: -1) {
+            let j = Int(arc4random_uniform(UInt32(i + 1)))
             if i != j {
-                self.swapAt(i, j)
+                swapAt(i, j)
             }
         }
     }
@@ -242,10 +241,28 @@ extension NSAttributedString {
 extension UIView {
     
     func roundCorners(corners: UIRectCorner, radius: CGFloat) {
-        let path = UIBezierPath(roundedRect: bounds, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-        let mask = CAShapeLayer()
-        mask.path = path.cgPath
-        layer.mask = mask
+        if #available(iOS 11.0, *) {
+            layer.cornerRadius = radius
+            guard !corners.contains(.allCorners) else { return }
+            layer.maskedCorners = []
+            if corners.contains(.topLeft) {
+                layer.maskedCorners.insert(.layerMaxXMinYCorner)
+            }
+            if corners.contains(.topRight) {
+                layer.maskedCorners.insert(.layerMinXMinYCorner)
+            }
+            if corners.contains(.bottomLeft) {
+                layer.maskedCorners.insert(.layerMinXMaxYCorner)
+            }
+            if corners.contains(.bottomRight) {
+                layer.maskedCorners.insert(.layerMaxXMaxYCorner)
+            }
+        } else {
+            let path = UIBezierPath(roundedRect: bounds, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+            let mask = CAShapeLayer()
+            mask.path = path.cgPath
+            layer.mask = mask
+        }
     }
 }
 

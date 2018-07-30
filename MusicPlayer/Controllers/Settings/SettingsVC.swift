@@ -10,31 +10,37 @@ import UIKit
 
 final class SettingsVC: UIViewController {
     
+    private enum Settings: String {
+        
+        case search = "Search"
+        
+        case browser = "Browser"
+        
+        case rateApp = "Rate app"
+        
+        case tellFriend = "Tell a friend"
+        
+        case sendFeedback = "Send feedback"
+    }
+    
     private let topBar = SettingsTopBar()
     
     private let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
-        layout.sectionInset.bottom = 16
+        layout.sectionInset.bottom = 30
         layout.minimumLineSpacing = 14
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.backgroundColor = .white
         collectionView.showsVerticalScrollIndicator = false
+        collectionView.backgroundColor = .white
         return collectionView
     }()
     
-    private let headerId = "headerId"
+    private let settingsGroups: [SettingsGroup<Settings>] = [
+        SettingsGroup(settings: [.search, .browser]),
+        SettingsGroup(settings: [.rateApp, .tellFriend, .sendFeedback])]
     
-    private let settings = [["Search", "Browser", "Passcode Lock"], ["Rate app", "Tell a friend", "Send feedback"]]
+    private let mailPresenter = MailControllerPresenter()
     
-    /// Settings
-    // ~ Tell a friend
-    // ~ Send feedback
-    // ~ Search (Spotlight)
-    // ~ Browser (Download files via cellular or wi-fi)
-    // ~ Passcode
-    // ~ Clear History
-    // ~ Clear Cookies
-    // ~ Disk space
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -59,9 +65,7 @@ final class SettingsVC: UIViewController {
         
         collectionView.delegate = self
         collectionView.dataSource = self
-        
         collectionView.register(NavigationSettingCell.self, forCellWithReuseIdentifier: NavigationSettingCell.reuseId)
-        collectionView.register(UICollectionReusableView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: headerId)
     
         setupPlayerBarObserver()
     }
@@ -83,45 +87,55 @@ final class SettingsVC: UIViewController {
 extension SettingsVC: UICollectionViewDataSource {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return settings.count
+        return settingsGroups.count
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return settings[section].count
+        return settingsGroups[section].settings.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NavigationSettingCell.reuseId, for: indexPath) as! NavigationSettingCell
-        cell.setupTitle(settings[indexPath.section][indexPath.item])
+        cell.setupTitle(settingsGroups[indexPath.section].settings[indexPath.item].rawValue)
         return cell
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        let view = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: headerId, for: indexPath)
-        return view
     }
 }
 
 extension SettingsVC: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if indexPath.section == 0 {
-            switch indexPath.item {
-            case 0: navigationController?.pushViewController(SearchSettingsVC(), animated: true)
-                
-            default:
-                navigationController?.pushViewController(SettingsBaseVC(), animated: true)
-            }
-        }
+        let setting = settingsGroups[indexPath.section].settings[indexPath.item]
+        didSelect(setting: setting)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: screenWidth - 32, height: 70)
+        return CGSize(width: view.frame.width - 32, height: 70)
+    }
+}
+
+extension SettingsVC {
+    
+    private func didSelect(setting: Settings) {
+        switch setting {
+        case .search :
+            navigationController?.pushViewController(SearchSettingsVC(), animated: true)
+        case .browser :
+            navigationController?.pushViewController(BrowserSettingsVC(), animated: true)
+        case .rateApp :
+            RateAppService.openAppStore()
+        case .tellFriend :
+            showActivityController()
+        case .sendFeedback :
+            mailPresenter.present(from: self)
+        }
     }
     
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
-        if section == 0 { return .zero}
-        return CGSize(width: view.frame.width, height: 24)
+    private func showActivityController() {
+        let appId = "..."
+        let appUrl = URL(string: "https://itunes.com/app/\(appId)")!
+        let text = "If you ever need to save & play music from your phone, download music app (Name) "
+        let vc = UIActivityViewController(activityItems: [appUrl], applicationActivities: [])
+        present(vc, animated: true)
     }
 }
 

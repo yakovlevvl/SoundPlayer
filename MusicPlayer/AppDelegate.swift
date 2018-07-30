@@ -7,9 +7,6 @@
 //
 
 import UIKit
-import RealmSwift
-import CoreSpotlight
-import UserNotifications
 
 @UIApplicationMain
 
@@ -18,38 +15,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
     var backgroundCompletionHandler: (() -> ())?
-    
-    let notificationDelegate = NotificationDelegate()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         
-        let center = UNUserNotificationCenter.current()
-        center.delegate = notificationDelegate
-        let options: UNAuthorizationOptions = [.alert, .sound]
-        center.requestAuthorization(options: options) { granted, error in }
+        NotificationService.main.requestAuthorization()
         
-        let config = Realm.Configuration(
-            // Set the new schema version. This must be greater than the previously used
-            // version (if you've never set a schema version before, the version is 0).
-            schemaVersion: 2,
-
-            // Set the block which will be called automatically when opening a Realm with
-            // a schema version lower than the one set above
-            migrationBlock: { migration, oldSchemaVersion in
-                // We haven’t migrated anything yet, so oldSchemaVersion == 0
-                if oldSchemaVersion < 2 {
-                    // Nothing to do!
-                    // Realm will automatically detect new properties and removed properties
-                    // And will update the schema on disk automatically
-                }
-        })
-
-        // Tell Realm to use this new configuration object for the default Realm
-        Realm.Configuration.defaultConfiguration = config
+        RealmService.configure()
         
         if !UserDefaults.standard.bool(forKey: UserDefaultsKeys.notFirstLaunch) {
             UserDefaults.standard.set(true, forKey: UserDefaultsKeys.notFirstLaunch)
-            
             SettingsManager.spotlightIsEnabled = true
         }
         
@@ -61,11 +35,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window?.rootViewController = BaseVC()
         window?.makeKeyAndVisible()
         
+        RateAppService.incrementAppOpenedCount()
+        RateAppService.checkAndAskForReview()
+        
         return true
     }
     
     func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
-        print("~handleEventsForBackgroundURLSession~")
         backgroundCompletionHandler = completionHandler
     }
     
@@ -95,7 +71,5 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
-
-
 }
 

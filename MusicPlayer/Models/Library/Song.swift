@@ -7,7 +7,7 @@
 //
 
 import RealmSwift
-////// when remove song first remove file
+
 class Song: Object {
     
     @objc dynamic var title = ""
@@ -44,5 +44,9 @@ class Song: Object {
         let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileUrl = documentsUrl.appendingPathComponent("Music").appendingPathComponent(fileSubpath)
         return fileUrl.path
+    }
+    
+    func removeSongFile() {
+        try? FileManager.default.removeItem(at: url)
     }
 }
