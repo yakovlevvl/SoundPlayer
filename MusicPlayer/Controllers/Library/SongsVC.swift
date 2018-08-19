@@ -18,7 +18,7 @@ final class SongsVC: UIViewController {
         let button = UIButton(type: .custom)
         button.frame.size = CGSize(width: 60, height: 46)
         button.setTitle("Sort", for: .normal)
-        button.titleLabel!.font = UIFont(name: Fonts.general, size: 20)
+        button.titleLabel!.font = Fonts.sortButtonFont
         button.setTitleColor(UIColor(hex: "D0021B"), for: .normal)
         return button
     }()
@@ -27,7 +27,7 @@ final class SongsVC: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.sectionInset.bottom = 16
         layout.minimumLineSpacing = 14
-        layout.itemSize = CGSize(width: screenWidth - 32, height: 70)
+        layout.itemSize = CGSize(width: screenWidth - 32, height: UIProperties.songCellHeight)
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .white
         return collectionView
@@ -233,8 +233,8 @@ extension SongsVC: SongActions {
 extension SongsVC: PlayerBarObservable {
     
     func playerBarAppeared() {
-        songsView.contentInset.bottom = PlayerBarProperties.barHeight
-        songsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+        songsView.contentInset.bottom = UIProperties.playerBarHeight
+        songsView.scrollIndicatorInsets.bottom = UIProperties.playerBarHeight
     }
     
     func playerBarDisappeared() {

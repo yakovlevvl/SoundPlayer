@@ -21,7 +21,7 @@ final class LibrarySearchBar: UIView {
         textField.autocapitalizationType = .sentences
         textField.clearButtonMode = .whileEditing
         textField.returnKeyType = .done
-        textField.font = UIFont(name: Fonts.general, size: Screen.is4inch ? 20 : 21)
+        textField.font = Fonts.librarySearchBarFont
         textField.frame.size.height = 46
         textField.backgroundColor = .white
         return textField

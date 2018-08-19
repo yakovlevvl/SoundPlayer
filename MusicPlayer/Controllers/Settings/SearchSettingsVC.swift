@@ -99,12 +99,8 @@ extension SearchSettingsVC {
         }
     }
     
-    override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: view.frame.width - 32, height: 70)
-    }
-    
     override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
-        let textSize = settingsGroups[section].description!.textSizeForMaxWidth(view.frame.width - 2*SettingDescriptionView.textHorizontalInset, font: SettingDescriptionView.font!)
+        let textSize = settingsGroups[section].description!.textSizeForMaxWidth(view.frame.width - 2*SettingDescriptionView.textHorizontalInset, font: Fonts.settingDescriptionViewFont)
         return CGSize(width: view.frame.width, height: textSize.height + 2*SettingDescriptionView.textVerticalInset)
     }
 }

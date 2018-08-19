@@ -22,7 +22,7 @@ class AddSongsVC: UIViewController {
     fileprivate let topBar: ClearTopBar = {
         let topBar = ClearTopBar()
         topBar.title = "Add Songs"
-        topBar.setRightButtonFontSize(20)
+        topBar.setRightButtonFont(Fonts.clearTopBarFont)
         topBar.setRightButtonTitle("Done")
         topBar.setRightButtonTitleColor(Colors.red)
         topBar.setLeftButtonImage(UIImage(named: "CloseIcon"))
@@ -33,7 +33,7 @@ class AddSongsVC: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.sectionInset.bottom = 16
         layout.minimumLineSpacing = 14
-        layout.itemSize = CGSize(width: screenWidth - 32, height: 70)
+        layout.itemSize = CGSize(width: screenWidth - 32, height: UIProperties.songCellHeight)
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .white
         return collectionView
@@ -75,7 +75,17 @@ class AddSongsVC: UIViewController {
         topBar.frame.origin = .zero
         topBar.frame.size = CGSize(width: view.frame.width, height: 82)
         
-        songsView.frame = view.bounds
+        if currentDevice == .iPhoneX {
+            if #available(iOS 11.0, *) {
+                songsView.contentInsetAdjustmentBehavior = .never
+                topBar.frame.origin.y = UIProperties.iPhoneXTopInset
+            }
+        }
+        
+        songsView.frame.origin = topBar.frame.origin
+        songsView.frame.size.width = view.frame.width
+        songsView.frame.size.height = view.frame.height - topBar.frame.minY
+        
         songsView.contentInset.top = topBar.frame.height + 2
         songsView.scrollIndicatorInsets.top = songsView.contentInset.top
     }

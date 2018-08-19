@@ -29,7 +29,7 @@ final class PlaylistsVC: UIViewController {
         let button = UIButton(type: .custom)
         button.frame.size = CGSize(width: 60, height: 46)
         button.setTitle("Sort", for: .normal)
-        button.titleLabel!.font = UIFont(name: Fonts.general, size: 20)
+        button.titleLabel!.font = Fonts.sortButtonFont
         button.setTitleColor(UIColor(hex: "D0021B"), for: .normal)
         return button
     }()
@@ -42,7 +42,7 @@ final class PlaylistsVC: UIViewController {
         layout.minimumLineSpacing = 17
         layout.minimumInteritemSpacing = 20
         let itemWidth = (screenWidth - 20*3)/2
-        layout.itemSize = CGSize(width: itemWidth, height: itemWidth + 40)
+        layout.itemSize = CGSize(width: itemWidth, height: itemWidth + UIProperties.PlaylistCell.descriptionHeight)
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .white
         return collectionView
@@ -109,6 +109,7 @@ final class PlaylistsVC: UIViewController {
     @objc private func tapAddButton() {
         let newPlaylistVC = NewPlaylistVC()
         newPlaylistVC.delegate = self
+        transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         newPlaylistVC.transitioningDelegate = transitionManager
         present(newPlaylistVC, animated: true)
     }
@@ -203,8 +204,8 @@ extension PlaylistsVC: UICollectionViewDelegateFlowLayout {
 extension PlaylistsVC: PlayerBarObservable {
     
     func playerBarAppeared() {
-        playlistsView.contentInset.bottom = PlayerBarProperties.barHeight
-        playlistsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+        playlistsView.contentInset.bottom = UIProperties.playerBarHeight
+        playlistsView.scrollIndicatorInsets.bottom = UIProperties.playerBarHeight
     }
     
     func playerBarDisappeared() {

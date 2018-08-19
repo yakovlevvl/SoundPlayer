@@ -16,7 +16,7 @@ final class LibraryTopBar: UIView {
         let label = UILabel()
         label.text = "Library"
         label.frame.size = CGSize(width: 120, height: 34)
-        label.font = UIFont(name: Fonts.general, size: 30)
+        label.font = Fonts.libraryTitleFont
         return label
     }()
     

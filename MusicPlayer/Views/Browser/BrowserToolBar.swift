@@ -85,8 +85,8 @@ final class BrowserToolBar: UIView  {
         closeButton.center.y = y
         
         let x = (frame.width/6).rounded()
-        backButton.center.x = x - ( Screen.is4inch ? 15 : 18 )
-        forwardButton.center.x = 2*x - ( Screen.is4inch ? 6 : 8 )
+        backButton.center.x = x - ( currentDevice == .iPhone5 ? 15 : 18 )
+        forwardButton.center.x = 2*x - ( currentDevice == .iPhone5 ? 6 : 8 )
         bookmarksButton.center.x = 3*x
         downloadsButton.center.x = 4*x + 8
         closeButton.center.x = 5*x + 13

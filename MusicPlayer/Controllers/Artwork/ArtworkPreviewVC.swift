@@ -91,6 +91,10 @@ final class ArtworkPreviewVC: UIViewController {
         imageView.frame.size = artwork.size
         scrollView.contentSize = imageView.frame.size
         
+        if #available(iOS 11.0, *) {
+            scrollView.contentInsetAdjustmentBehavior = .never
+        }
+        
         scrollView.minimumZoomScale = max(scrollView.bounds.width/imageView.bounds.width,
             scrollView.bounds.width/imageView.bounds.height)
         scrollView.zoomScale = scrollView.minimumZoomScale
@@ -148,9 +152,10 @@ final class ArtworkPreviewVC: UIViewController {
         let y = (scrollView.contentOffset.y + frameLayer.frame.origin.y) * scale
         let cropFrame = CGRect(x: x, y: y, width: width, height: height)
         let croppedImage = UIImage(cgImage: artwork.cgImage!.cropping(to: cropFrame)!)
-        croppedImage.resizeAsync(to: CGSize(width: 240, height: 240)) { image in
+        let size = UIProperties.Player.artworkWidth
+        croppedImage.resizeAsync(to: CGSize(width: size, height: size)) { image in
             completion(image)
-        }  /////160
+        }
     }
 }
 

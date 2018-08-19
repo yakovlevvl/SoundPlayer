@@ -59,7 +59,9 @@ extension VerticalTransitionAnimator: UIViewControllerAnimatedTransitioning {
     private func animateDismissing(fromView: UIView, toView: UIView, completion: @escaping () -> ()) {
         UIView.animate(dismissDuration, animation: {
             toView.transform = .identity
-            toView.layer.cornerRadius = 0
+            if self.cornerRadius != 0 {
+                toView.layer.cornerRadius = 0
+            }
             fromView.frame.origin.y = screenHeight
         }, completion: { _ in
             completion()

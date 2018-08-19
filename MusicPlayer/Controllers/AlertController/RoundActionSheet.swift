@@ -14,8 +14,8 @@ final class RoundActionSheet: ActionSheet {
         super.init()
         cornerRadius = 12
         corners = [.topLeft, .topRight]
-        actionCellHeight = Screen.is4inch ? 68 : 70
-        font = UIFont(name: Fonts.general, size: 21)!
+        actionCellHeight = UIProperties.actionSheetCellHeight
+        font = Fonts.actionSheetFont
         addAction(Action(title: "Cancel", type: .cancel))
     }
     

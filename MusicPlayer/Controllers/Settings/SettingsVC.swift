@@ -72,7 +72,12 @@ final class SettingsVC: UIViewController {
     
     private func layoutViews() {
         topBar.frame.origin = .zero
-        topBar.frame.size = CGSize(width: view.frame.width, height: 90)
+        let topBarHeight: CGFloat = currentDevice == .iPhoneX ? 86 : 90
+        topBar.frame.size = CGSize(width: view.frame.width, height: topBarHeight)
+        
+        if #available(iOS 11.0, *) {
+            collectionView.contentInsetAdjustmentBehavior = .never
+        }
         
         collectionView.frame = view.bounds
         collectionView.contentInset.top = topBar.frame.height + 18
@@ -109,7 +114,7 @@ extension SettingsVC: UICollectionViewDelegateFlowLayout {
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: view.frame.width - 32, height: 70)
+        return CGSize(width: view.frame.width - 32, height: UIProperties.songCellHeight)
     }
 }
 
@@ -142,8 +147,8 @@ extension SettingsVC {
 extension SettingsVC: PlayerBarObservable {
     
     func playerBarAppeared() {
-        collectionView.contentInset.bottom = PlayerBarProperties.barHeight
-        collectionView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+        collectionView.contentInset.bottom = UIProperties.playerBarHeight
+        collectionView.scrollIndicatorInsets.bottom = UIProperties.playerBarHeight
     }
     
     func playerBarDisappeared() {

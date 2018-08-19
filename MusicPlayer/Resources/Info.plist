@@ -31,7 +31,6 @@
 	<string></string>
 	<key>UIAppFonts</key>
 	<array>
-		<string>GothamProMedium.ttf</string>
 		<string>Circe-Bold.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>

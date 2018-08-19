@@ -26,7 +26,7 @@ final class PlayerProgressView: UIView {
     private let elapsedTimeLabel: UILabel = {
         let label = UILabel()
         label.frame.size = CGSize(width: 90, height: 24)
-        label.font = UIFont(name: Fonts.general, size: 14)
+        label.font = Fonts.playerProgressTimeFont
         label.textColor = UIColor(hex: "919191")
         label.textAlignment = .left
         return label
@@ -35,7 +35,7 @@ final class PlayerProgressView: UIView {
     private let remainingTimeLabel: UILabel = {
         let label = UILabel()
         label.frame.size = CGSize(width: 90, height: 24)
-        label.font = UIFont(name: Fonts.general, size: 14)
+        label.font = Fonts.playerProgressTimeFont
         label.textColor = UIColor(hex: "919191")
         label.textAlignment = .right
         return label
@@ -90,7 +90,7 @@ final class PlayerProgressView: UIView {
         slider.frame.size = CGSize(width: frame.width, height: 28)
         
         elapsedTimeLabel.frame.origin.x = slider.frame.minX + 2
-        elapsedTimeLabel.frame.origin.y = slider.center.y + 2
+        elapsedTimeLabel.frame.origin.y = slider.center.y + UIProperties.Player.progressTimeTopInset
         
         remainingTimeLabel.frame.origin.x = slider.frame.maxX - remainingTimeLabel.frame.width - 2
         remainingTimeLabel.frame.origin.y = elapsedTimeLabel.frame.origin.y
@@ -115,8 +115,8 @@ final class PlayerProgressView: UIView {
             delegate?.sliderEndedDrag()
             
             UIView.animate(0.28) {
-                self.elapsedTimeLabel.frame.origin.y = self.slider.center.y + 2
-                self.remainingTimeLabel.frame.origin.y = self.slider.center.y + 2
+                self.elapsedTimeLabel.frame.origin.y = self.slider.center.y + UIProperties.Player.progressTimeTopInset
+                self.remainingTimeLabel.frame.origin.y = self.slider.center.y + UIProperties.Player.progressTimeTopInset
                 self.elapsedTimeLabel.textColor = UIColor(hex: "919191")
             }
             

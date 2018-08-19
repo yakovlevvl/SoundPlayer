@@ -21,7 +21,7 @@ class NewPlaylistVC: UIViewController {
     fileprivate let topBar: ClearTopBar = {
         let topBar = ClearTopBar()
         topBar.title = "New Playlist"
-        topBar.setRightButtonFontSize(20)
+        topBar.setRightButtonFont(Fonts.clearTopBarFont)
         topBar.setRightButtonTitle("Done")
         topBar.setRightButtonTitleColor(Colors.red)
         topBar.setLeftButtonImage(UIImage(named: "CloseIcon"))
@@ -32,7 +32,7 @@ class NewPlaylistVC: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.sectionInset.bottom = 16
         layout.minimumLineSpacing = 14
-        layout.itemSize = CGSize(width: screenWidth - 32, height: 70)
+        layout.itemSize = CGSize(width: screenWidth - 32, height: UIProperties.songCellHeight)
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .white
         return collectionView
@@ -74,16 +74,26 @@ class NewPlaylistVC: UIViewController {
         setupKeyboardObserver()
     }
     
-    private func layoutViews() {
+    fileprivate func layoutViews() {
         topBar.frame.origin = .zero
         topBar.frame.size = CGSize(width: view.frame.width, height: 82)
         
-        songsView.frame = view.bounds
+        if currentDevice == .iPhoneX {
+            if #available(iOS 11.0, *) {
+                songsView.contentInsetAdjustmentBehavior = .never
+                topBar.frame.origin.y = UIProperties.iPhoneXTopInset
+            }
+        }
+        
+        songsView.frame.origin = topBar.frame.origin
+        songsView.frame.size.width = view.frame.width
+        songsView.frame.size.height = view.frame.height - topBar.frame.minY
+        
         songsView.contentInset.top = topBar.frame.height
         songsView.scrollIndicatorInsets.top = songsView.contentInset.top
         
         let layout = songsView.collectionViewLayout as! UICollectionViewFlowLayout
-        layout.headerReferenceSize = CGSize(width: songsView.frame.width, height: 226)
+        layout.headerReferenceSize = CGSize(width: songsView.frame.width, height: UIProperties.CompilationView.height)
     }
     
     fileprivate func registerSupplementaryViewClass() {
@@ -148,6 +158,7 @@ class NewPlaylistVC: UIViewController {
         let addSongsVC = PlaylistAddSongsVC()
         addSongsVC.delegate = self
         addSongsVC.addedSongs = addedSongs
+        transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         addSongsVC.transitioningDelegate = transitionManager
         present(addSongsVC, animated: true)
     }
@@ -178,12 +189,14 @@ extension NewPlaylistVC: NewPlaylistViewDelegate {
             showAddArtworkVC()
         } else {
             showArtworkActions()
+            view.endEditing(true)
         }
     }
     
     private func showAddArtworkVC() {
         let addArtworkVC = AddArtworkVC()
         addArtworkVC.delegate = self
+        transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         addArtworkVC.transitioningDelegate = transitionManager
         present(addArtworkVC, animated: true)
     }
@@ -319,6 +332,7 @@ class NewAlbumVC: NewPlaylistVC {
         let addSongsVC = AlbumAddSongsVC()
         addSongsVC.delegate = self
         addSongsVC.addedSongs = addedSongs
+        transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         addSongsVC.transitioningDelegate = transitionManager
         present(addSongsVC, animated: true)
     }
@@ -353,6 +367,22 @@ final class EditPlaylistVC: NewPlaylistVC {
         setupPlayerBarObserver()
     }
     
+    override func layoutViews() {
+        topBar.frame.origin = .zero
+        topBar.frame.size = CGSize(width: view.frame.width, height: 82)
+        
+        if #available(iOS 11.0, *) {
+            songsView.contentInsetAdjustmentBehavior = .never
+        }
+        
+        songsView.frame = view.bounds
+        songsView.contentInset.top = topBar.frame.height
+        songsView.scrollIndicatorInsets.top = songsView.contentInset.top
+        
+        let layout = songsView.collectionViewLayout as! UICollectionViewFlowLayout
+        layout.headerReferenceSize = CGSize(width: songsView.frame.width, height: UIProperties.CompilationView.height)
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         addedSongs = addedSongs.filter { !$0.isInvalidated }
@@ -365,6 +395,7 @@ final class EditPlaylistVC: NewPlaylistVC {
         addSongsVC.playlist = playlist
         addSongsVC.delegate = self
         addSongsVC.addedSongs = addedSongs
+        transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         addSongsVC.transitioningDelegate = transitionManager
         present(addSongsVC, animated: true)
     }
@@ -410,6 +441,22 @@ final class EditAlbumVC: NewAlbumVC {
         setupPlayerBarObserver()
     }
     
+    override func layoutViews() {
+        topBar.frame.origin = .zero
+        topBar.frame.size = CGSize(width: view.frame.width, height: 82)
+        
+        if #available(iOS 11.0, *) {
+            songsView.contentInsetAdjustmentBehavior = .never
+        }
+        
+        songsView.frame = view.bounds
+        songsView.contentInset.top = topBar.frame.height
+        songsView.scrollIndicatorInsets.top = songsView.contentInset.top
+        
+        let layout = songsView.collectionViewLayout as! UICollectionViewFlowLayout
+        layout.headerReferenceSize = CGSize(width: songsView.frame.width, height: UIProperties.CompilationView.height)
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         addedSongs = addedSongs.filter { !$0.isInvalidated }
@@ -422,6 +469,7 @@ final class EditAlbumVC: NewAlbumVC {
         addSongsVC.album = album
         addSongsVC.delegate = self
         addSongsVC.addedSongs = addedSongs
+        transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         addSongsVC.transitioningDelegate = transitionManager
         present(addSongsVC, animated: true)
     }
@@ -454,8 +502,8 @@ protocol EditAlbumDelegate: class {
 extension EditAlbumVC: PlayerBarObservable {
     
     func playerBarAppeared() {
-        songsView.contentInset.bottom = PlayerBarProperties.barHeight
-        songsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+        songsView.contentInset.bottom = UIProperties.playerBarHeight
+        songsView.scrollIndicatorInsets.bottom = UIProperties.playerBarHeight
     }
     
     func playerBarDisappeared() {
@@ -467,8 +515,8 @@ extension EditAlbumVC: PlayerBarObservable {
 extension EditPlaylistVC: PlayerBarObservable {
     
     func playerBarAppeared() {
-        songsView.contentInset.bottom = PlayerBarProperties.barHeight
-        songsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+        songsView.contentInset.bottom = UIProperties.playerBarHeight
+        songsView.scrollIndicatorInsets.bottom = UIProperties.playerBarHeight
     }
     
     func playerBarDisappeared() {

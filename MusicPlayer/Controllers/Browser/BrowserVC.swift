@@ -7,7 +7,6 @@
 //
 
 import WebKit
-import UserNotifications
 
 final class BrowserVC: UIViewController {
     
@@ -68,24 +67,20 @@ final class BrowserVC: UIViewController {
         super.viewWillAppear(animated)
         if SettingsManager.browserNeedReset {
             SettingsManager.browserNeedReset = false
-            //loadLastUrl()
         }
     }
     
     private func setupViews() {
         view.backgroundColor = .white
         
-        topBar.frame.origin = .zero
-        topBar.frame.size = CGSize(width: view.frame.width, height: 62)
-        
-        toolBar.frame.origin.x = 0
-        toolBar.frame.size = CGSize(width: view.frame.width, height: 62)
-        toolBar.frame.origin.y = view.frame.height - toolBar.frame.height
+        view.addSubview(topBar)
+        view.addSubview(toolBar)
+        view.addSubview(progressView)
+        view.insertSubview(webView, at: 0)
         
         topBar.delegate = self
         toolBar.delegate = self
         
-        webView.frame = view.frame
         webView.navigationDelegate = self
         webView.scrollView.delegate = self
         webView.allowsBackForwardNavigationGestures = true
@@ -93,21 +88,47 @@ final class BrowserVC: UIViewController {
         webView.scrollView.scrollIndicatorInsets.top = topBar.frame.height
         webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 11_2_5 like Mac OS X) AppleWebKit/604.5.6 (KHTML, like Gecko) Version/11.0 Mobile/15D60 Safari/604.1"
         
-        progressView.frame.size.width = view.frame.width
-        
-        view.addSubview(topBar)
-        view.addSubview(toolBar)
-        view.addSubview(progressView)
-        view.insertSubview(webView, at: 0)
-        
-        toolBar.isBackButtonEnabled = false
         toolBar.isForwardButtonEnabled = false
+        toolBar.isBackButtonEnabled = false
         
         setupObservations()
+        
+        layoutViews()
         
         loadLastUrl()
         
         NotificationCenter.default.addObserver(self, selector: #selector(saveLastUrl), name: .UIApplicationWillTerminate, object: nil)
+    }
+    
+    private func layoutViews() {
+        toolBar.frame.origin.x = 0
+        topBar.frame.origin = .zero
+        if currentDevice == .iPhoneX {
+            if #available(iOS 11.0, *) {
+                webView.scrollView.contentInsetAdjustmentBehavior = .never
+                topBar.frame.origin.y = UIProperties.iPhoneXTopInset
+            }
+        }
+        
+        topBar.frame.size = CGSize(width: view.frame.width, height: 62)
+        toolBar.frame.size = CGSize(width: view.frame.width, height: 62)
+        
+        webView.frame.origin = topBar.frame.origin
+        webView.frame.size.width = view.frame.width
+        
+        let bottomInset: CGFloat = 16
+        
+        if currentDevice == .iPhoneX {
+            toolBar.frame.origin.y = view.frame.height - toolBar.frame.height - bottomInset
+            webView.frame.size.height = view.frame.height - topBar.frame.minY - bottomInset
+        } else {
+            toolBar.frame.origin.y = view.frame.height - toolBar.frame.height
+            webView.frame.size.height = view.frame.height - topBar.frame.minY
+        }
+
+        progressView.frame.origin.x = 0
+        progressView.frame.size.width = view.frame.width
+        progressView.frame.origin.y = currentDevice == .iPhoneX ? topBar.frame.maxY - progressView.frame.height : topBar.frame.origin.y
     }
     
     private func setupKeyboardObserver() {
@@ -229,7 +250,7 @@ final class BrowserVC: UIViewController {
         historyVC!.historyManager = historyManager
         addChildController(historyVC!)
         historyVC!.view.frame.size.width = view.frame.width
-        historyVC!.view.frame.origin = CGPoint(x: 0, y: topBar.frame.height)
+        historyVC!.view.frame.origin = CGPoint(x: 0, y: topBar.frame.maxY)
     }
     
     @objc private func keyboardWillChangeFrame(notification: Notification) {
@@ -247,7 +268,7 @@ final class BrowserVC: UIViewController {
                setupHistoryVC()
             }
             if historyVC != nil {
-                historyVC!.view.frame.size.height = frame.origin.y - topBar.frame.height
+                historyVC!.view.frame.size.height = frame.origin.y - topBar.frame.maxY
             }
         }
     }
@@ -342,7 +363,7 @@ extension BrowserVC: BrowserToolBarDelegate {
     
     private func showBookmarks() {
         let bookmarksVC = BookmarksVC()
-        transitionManager.cornerRadius = 8
+        transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 8
         bookmarksVC.transitioningDelegate = transitionManager
         bookmarksVC.bookmarksManager = bookmarksManager
         bookmarksVC.delegate = self
@@ -386,7 +407,7 @@ extension BrowserVC: BrowserToolBarDelegate {
     
     func tapDownloadsButton() {
         let downloadsVC = DownloadsVC()
-        transitionManager.cornerRadius = 8
+        transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 8
         downloadsVC.transitioningDelegate = transitionManager
         downloadsVC.downloadsManager = downloadsManager
         downloadDelegate = downloadsVC
@@ -578,6 +599,7 @@ extension BrowserVC: UIScrollViewDelegate {
         UIView.animate(0.24, options: [.allowUserInteraction, .curveEaseOut]) {
             self.topBar.transform = .identity
             self.toolBar.transform = .identity
+            self.progressView.transform = .identity
             self.webView.scrollView.contentInset.top = self.topBar.frame.height
             self.webView.scrollView.contentInset.bottom = self.toolBar.frame.height
             self.webView.scrollView.scrollIndicatorInsets.top = self.topBar.frame.height
@@ -591,8 +613,12 @@ extension BrowserVC: UIScrollViewDelegate {
             self.webView.scrollView.contentInset.bottom = 0
             self.webView.scrollView.scrollIndicatorInsets.top = 0
             self.webView.scrollView.scrollIndicatorInsets.bottom = 0
-            self.topBar.transform = CGAffineTransform(translationX: 0, y: -self.topBar.frame.height)
+            let topBarTranslation = currentDevice == .iPhoneX ? self.topBar.frame.height + UIProperties.iPhoneXTopInset : self.topBar.frame.height
+            self.topBar.transform = CGAffineTransform(translationX: 0, y: -topBarTranslation)
             self.toolBar.transform = CGAffineTransform(translationX: 0, y: self.toolBar.frame.height)
+            if currentDevice == .iPhoneX {
+                self.progressView.transform = CGAffineTransform(translationX: 0, y: -self.topBar.frame.height)
+            }
         }
     }
 }

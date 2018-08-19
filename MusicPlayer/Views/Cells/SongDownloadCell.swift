@@ -24,14 +24,14 @@ final class SongDownloadCell: UICollectionViewCell {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.frame.size.height = 28
-        label.font = UIFont(name: Fonts.general, size: 20)
+        label.font = Fonts.songDownloadCellTitleFont
         return label
     }()
     
     private let progressLabel: UILabel = {
         let label = UILabel()
         label.frame.size.height = 28
-        label.font = UIFont(name: Fonts.general, size: 17)
+        label.font = Fonts.songDownloadCellProgressFont
         return label
     }()
     

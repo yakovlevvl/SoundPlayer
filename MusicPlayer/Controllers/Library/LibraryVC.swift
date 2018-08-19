@@ -78,10 +78,11 @@ final class LibraryVC: UIViewController {
     
     private func layoutViews() {
         topBar.frame.origin = .zero
-        topBar.frame.size = CGSize(width: view.frame.width, height: 90)
+        let topBarHeight: CGFloat = currentDevice == .iPhoneX ? 86 : 90
+        topBar.frame.size = CGSize(width: view.frame.width, height: topBarHeight)
         
         menuBar.view.frame.size = CGSize(width: view.frame.width - 50, height: 40)
-        menuBar.view.frame.origin.y = topBar.frame.height
+        menuBar.view.frame.origin.y = topBar.frame.maxY
         menuBar.view.center.x = view.center.x
         
         var rect = CGRect()

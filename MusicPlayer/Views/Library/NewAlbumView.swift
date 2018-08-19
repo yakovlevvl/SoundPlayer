@@ -14,7 +14,8 @@ class NewPlaylistView: UICollectionReusableView {
     
     private let artworkView: ArtworkView = {
         let imageView = ArtworkView()
-        imageView.frame.size = CGSize(width: 110, height: 110)
+        let height = UIProperties.CompilationView.artworkHeight
+        imageView.frame.size = CGSize(width: height, height: height)
         return imageView
     }()
     
@@ -27,13 +28,14 @@ class NewPlaylistView: UICollectionReusableView {
         textField.returnKeyType = .done
         textField.autocorrectionType = .no
         textField.adjustsFontSizeToFitWidth = true
-        textField.font = UIFont(name: Fonts.general, size: 20)
+        textField.font = Fonts.compilationViewTitleFont
         return textField
     }()
     
     private let plusButton: RoundButton = {
         let button = RoundButton(type: .custom)
-        button.frame.size = CGSize(width: 54, height: 54)
+        let height = UIProperties.CompilationView.playButtonHeight
+        button.frame.size = CGSize(width: height, height: height)
         button.backgroundColor = Colors.roundButtonColor
         button.setImage(UIImage(named: "PlusIcon"))
         button.setShadowColor(Colors.red)
@@ -47,14 +49,15 @@ class NewPlaylistView: UICollectionReusableView {
         let button = UIButton(type: .custom)
         button.setTitleColor(.black, for: .normal)
         button.setTitle("Add Songs", for: .normal)
-        button.titleLabel!.font = UIFont(name: Fonts.general, size: 19)
+        button.titleLabel!.font = Fonts.addMusicButtonFont
         button.frame.size = CGSize(width: 100, height: 50)
         return button
     }()
     
     private let addArtworkButton: RoundButton = {
         let button = RoundButton(type: .custom)
-        button.frame.size = CGSize(width: 34, height: 34)
+        let height = UIProperties.CompilationView.moreButtonHeight
+        button.frame.size = CGSize(width: height, height: height)
         button.backgroundColor = Colors.roundButtonColor
         button.setImage(UIImage(named: "PlusMiniIcon"))
         button.tintColor = .white
@@ -88,13 +91,13 @@ class NewPlaylistView: UICollectionReusableView {
     }
     
     fileprivate func layoutViews() {
-        artworkView.frame.origin = CGPoint(x: 20, y: 2)
+        artworkView.frame.origin = CGPoint(x: 20, y: UIProperties.CompilationView.artworkTopInset + 1)
         
         titleField.frame.origin.y = artworkView.frame.minY + 8
         titleField.frame.origin.x = artworkView.frame.maxX + 20
         titleField.frame.size.width = frame.width - titleField.frame.minX - 20
         
-        plusButton.frame.origin = CGPoint(x: 32, y: artworkView.frame.maxY + 30)
+        plusButton.frame.origin = CGPoint(x: 32, y: artworkView.frame.maxY + UIProperties.CompilationView.playButtonTopInset)
         addMusicButton.frame.origin.x = plusButton.frame.maxX + 10
         addMusicButton.center.y = plusButton.center.y
         
@@ -144,7 +147,7 @@ final class NewAlbumView: NewPlaylistView {
         textField.returnKeyType = .done
         textField.autocorrectionType = .no
         textField.adjustsFontSizeToFitWidth = true
-        textField.font = UIFont(name: Fonts.general, size: 20)
+        textField.font = Fonts.compilationViewTitleFont
         return textField
     }()
     

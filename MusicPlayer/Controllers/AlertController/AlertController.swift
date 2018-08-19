@@ -31,7 +31,7 @@ final class AlertController: UIViewController {
     var font = UIFont.systemFont(ofSize: 19)
     
     private let separatorWidth: CGFloat = 2
-    private let actionCellHeight: CGFloat = Screen.is4inch ? 58 : 62
+    private let actionCellHeight: CGFloat = UIProperties.alertControllerCellHeight
     var separatorColor = UIColor(red: 245/255, green: 245/255, blue: 245/255, alpha: 1)
     var backgroundColor = UIColor.white
     
@@ -79,7 +79,7 @@ final class AlertController: UIViewController {
         var alertHeaderHeight: CGFloat = 0
         let alertWidth = view.frame.width - 50
         let messageHorizontalInset: CGFloat = 20
-        let messageVerticalInset: CGFloat = Screen.is4inch ? 28 : 32
+        let messageVerticalInset: CGFloat = currentDevice == .iPhone5 ? 28 : 32
         let textFieldHorizontalInset: CGFloat = 24
         
         let style = NSMutableParagraphStyle()
@@ -197,7 +197,7 @@ final class AlertController: UIViewController {
     }
     
     @objc private func dismiss() {
-        let duration = includeTextField ? 0.5 : ( Screen.is4inch ? 0.42 : 0.46 )
+        let duration = includeTextField ? 0.5 : ( currentDevice == .iPhone5 ? 0.42 : 0.46 )
         UIView.animate(withDuration: duration, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 0.8, options: [], animations: {
             self.collectionView.frame.origin.y = self.view.frame.height
             self.view.backgroundColor = UIColor(white: 0, alpha: 0)

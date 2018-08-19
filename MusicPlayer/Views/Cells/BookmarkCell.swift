@@ -24,7 +24,7 @@ final class BookmarkCell: UICollectionViewCell {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.frame.size.height = 28
-        label.font = UIFont(name: Fonts.general, size: 20)
+        label.font = Fonts.bookmarkCellFont
         return label
     }()
     

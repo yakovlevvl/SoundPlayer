@@ -90,8 +90,15 @@ final class AddArtworkVC: UIViewController {
         topBar.frame.origin = .zero
         topBar.frame.size = CGSize(width: view.frame.width, height: 74)
         
+        if currentDevice == .iPhoneX {
+            if #available(iOS 11.0, *) {
+                photosView.contentInsetAdjustmentBehavior = .never
+                topBar.frame.origin.y = UIProperties.iPhoneXTopInset
+            }
+        }
+        
         photosView.frame.origin.x = 0
-        photosView.frame.origin.y = topBar.frame.height
+        photosView.frame.origin.y = topBar.frame.maxY
         photosView.frame.size.width = view.frame.width
         photosView.frame.size.height = view.frame.height - photosView.frame.minY
     

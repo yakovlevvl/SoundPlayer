@@ -64,6 +64,7 @@ final class ArtworkView: UIView {
         if image == nil {
             setDefaultArtwork()
         } else {
+            removeArtwork()
             imageView.image = image
             imageView.contentMode = .scaleAspectFill
         }
@@ -73,9 +74,9 @@ final class ArtworkView: UIView {
         imageView.contentMode = .center
         if frame.width < 70 {
             imageView.image = UIImage(named: "AlbumMiniIcon")
-        } else if frame.width > 70, frame.width < 160 {
+        } else if frame.width > 70, frame.width < 180 {
             imageView.image = UIImage(named: "AlbumIcon")
-        } else if frame.width > 160 {
+        } else if frame.width > 180 {
             imageView.image = UIImage(named: "AlbumBigIcon")
         }
     }

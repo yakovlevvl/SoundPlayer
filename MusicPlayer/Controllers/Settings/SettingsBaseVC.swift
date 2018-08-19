@@ -66,6 +66,10 @@ class SettingsBaseVC: UIViewController {
         topBar.frame.origin = .zero
         topBar.frame.size = CGSize(width: view.frame.width, height: 76)
         
+        if #available(iOS 11.0, *) {
+            collectionView.contentInsetAdjustmentBehavior = .never
+        }
+        
         collectionView.frame = view.bounds
         collectionView.contentInset.top = topBar.frame.height - 14
         collectionView.scrollIndicatorInsets.top = collectionView.contentInset.top
@@ -105,7 +109,7 @@ extension SettingsBaseVC: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {}
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return .zero
+        return CGSize(width: view.frame.width - 32, height: UIProperties.songCellHeight)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
@@ -124,8 +128,8 @@ extension SettingsBaseVC: UICollectionViewDelegateFlowLayout {
 extension SettingsBaseVC: PlayerBarObservable {
     
     func playerBarAppeared() {
-        collectionView.contentInset.bottom = PlayerBarProperties.barHeight
-        collectionView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+        collectionView.contentInset.bottom = UIProperties.playerBarHeight
+        collectionView.scrollIndicatorInsets.bottom = UIProperties.playerBarHeight
     }
     
     func playerBarDisappeared() {

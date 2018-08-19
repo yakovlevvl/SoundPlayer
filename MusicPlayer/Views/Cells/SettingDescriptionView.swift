@@ -12,7 +12,7 @@ final class SettingDescriptionView: UICollectionReusableView {
     
     private let textView: UITextView = {
         let textView = UITextView()
-        textView.font = SettingDescriptionView.font
+        textView.font = Fonts.settingDescriptionViewFont
         textView.textColor = .gray
         textView.isScrollEnabled = false
         textView.textContainerInset = .zero
@@ -21,8 +21,6 @@ final class SettingDescriptionView: UICollectionReusableView {
     }()
     
     static let reuseId = "SettingDescriptionView"
-    
-    static let font = UIFont(name: Fonts.general, size: 18)
     
     static let textHorizontalInset: CGFloat = 24
     

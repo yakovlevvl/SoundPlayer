@@ -17,8 +17,8 @@ final class DownloadsVC: UIViewController {
     private let topBar: ClearTopBar = {
         let topBar = ClearTopBar()
         topBar.title = "Downloads"
-        topBar.setRightButtonFontSize(19)
         topBar.setRightButtonTitle("Clear")
+        topBar.setRightButtonFont(Fonts.clearDownloadsButtonFont)
         topBar.setRightButtonTitleColor(Colors.red)
         topBar.setLeftButtonImage(UIImage(named: "CloseIcon"))
         return topBar
@@ -68,9 +68,19 @@ final class DownloadsVC: UIViewController {
     
     private func layoutViews() {
         topBar.frame.origin = .zero
+        if currentDevice == .iPhoneX {
+            if #available(iOS 11.0, *) {
+                downloadsView.contentInsetAdjustmentBehavior = .never
+                topBar.frame.origin.y = UIProperties.iPhoneXTopInset
+            }
+        }
+        
         topBar.frame.size = CGSize(width: view.frame.width, height: 82)
         
-        downloadsView.frame = view.frame
+        downloadsView.frame.origin = topBar.frame.origin
+        downloadsView.frame.size.width = view.frame.width
+        downloadsView.frame.size.height = view.frame.height - topBar.frame.origin.y
+        
         downloadsView.contentInset.top = topBar.frame.height + 4
         downloadsView.scrollIndicatorInsets.top = downloadsView.contentInset.top
         downloadsView.scrollIndicatorInsets.bottom = 5

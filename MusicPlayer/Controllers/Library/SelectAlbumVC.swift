@@ -57,7 +57,17 @@ class SelectCompilationVC: UIViewController {
         topBar.frame.origin = .zero
         topBar.frame.size = CGSize(width: view.frame.width, height: 76)
         
-        collectionView.frame = view.bounds
+        if currentDevice == .iPhoneX {
+            if #available(iOS 11.0, *) {
+                collectionView.contentInsetAdjustmentBehavior = .never
+                topBar.frame.origin.y = UIProperties.iPhoneXTopInset
+            }
+        }
+        
+        collectionView.frame.origin = topBar.frame.origin
+        collectionView.frame.size.width = view.frame.width
+        collectionView.frame.size.height = view.frame.height - topBar.frame.minY
+        
         collectionView.contentInset.top = topBar.frame.height + 2
         collectionView.scrollIndicatorInsets.top = collectionView.contentInset.top
         
@@ -109,7 +119,7 @@ final class SelectAlbumVC: SelectCompilationVC {
     var song: Song!
     
     override var cellHeight: CGFloat {
-        return cellWidth + 54
+        return cellWidth + UIProperties.AlbumCell.descriptionHeight
     }
 
     private lazy var alertView: AlertView = {
@@ -167,7 +177,7 @@ final class SelectPlaylistVC: SelectCompilationVC {
     var songs: [Song]!
     
     override var cellHeight: CGFloat {
-        return cellWidth + 40
+        return cellWidth + UIProperties.PlaylistCell.descriptionHeight
     }
     
     private lazy var alertView: AlertView = {

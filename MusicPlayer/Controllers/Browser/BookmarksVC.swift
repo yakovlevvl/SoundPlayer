@@ -26,7 +26,7 @@ final class BookmarksVC: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.sectionInset.bottom = 16
         layout.minimumLineSpacing = 16
-        layout.itemSize = CGSize(width: screenWidth - 32, height: 76)
+        layout.itemSize = CGSize(width: screenWidth - 32, height: UIProperties.bookmarkCellHeight)
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = Colors.darkWhite
         return collectionView
@@ -66,9 +66,19 @@ final class BookmarksVC: UIViewController {
     
     private func layoutViews() {
         topBar.frame.origin = .zero
+        if currentDevice == .iPhoneX {
+            if #available(iOS 11.0, *) {
+                bookmarksView.contentInsetAdjustmentBehavior = .never
+                topBar.frame.origin.y = UIProperties.iPhoneXTopInset
+            }
+        }
+        
         topBar.frame.size = CGSize(width: view.frame.width, height: 82)
         
-        bookmarksView.frame = view.frame
+        bookmarksView.frame.origin = topBar.frame.origin
+        bookmarksView.frame.size.width = view.frame.width
+        bookmarksView.frame.size.height = view.frame.height - topBar.frame.origin.y
+        
         bookmarksView.contentInset.top = topBar.frame.height + 4
         bookmarksView.scrollIndicatorInsets.top = bookmarksView.contentInset.top
         bookmarksView.scrollIndicatorInsets.bottom = 5

@@ -75,13 +75,14 @@ final class PlayerVC: UIViewController {
     
     private let artworkView: ArtworkView = {
         let view = ArtworkView()
-        view.frame.size = CGSize(width: 240, height: 240)
+        let width = UIProperties.Player.artworkWidth
+        view.frame.size = CGSize(width: width, height: width)
         return view
     }()
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: Fonts.general, size: 21)
+        label.font = Fonts.playerTitleFont
         label.textAlignment = .center
         return label
     }()
@@ -89,7 +90,7 @@ final class PlayerVC: UIViewController {
     private let artistLabel: UILabel = {
         let label = UILabel()
         label.textColor = Colors.red
-        label.font = UIFont(name: Fonts.general, size: 18)
+        label.font = Fonts.playerArtistFont
         label.textAlignment = .center
         return label
     }()
@@ -149,32 +150,34 @@ final class PlayerVC: UIViewController {
         
         closeButton.addTarget(self, action: #selector(tapCloseButton), for: .touchUpInside)
         
-        view.roundCorners(corners: [.topRight, .topLeft], radius: 10)
+        if currentDevice != .iPhoneX {
+            view.roundCorners(corners: [.topRight, .topLeft], radius: 10)
+        }
     }
     
     private func layoutViews() {
         let centerX = view.frame.width/2
         
         closeButton.center.x = centerX
-        closeButton.frame.origin.y = 12
+        closeButton.frame.origin.y = UIProperties.Player.closeButtonTopInset
         
         artworkView.center.x = centerX
-        artworkView.frame.origin.y = closeButton.frame.maxY + 12
+        artworkView.frame.origin.y = closeButton.frame.maxY + UIProperties.Player.closeButtonBottomInset
         
-        progressView.frame.size = CGSize(width: view.frame.width - 76, height: 40)
+        progressView.frame.size = CGSize(width: artworkView.frame.width - 4, height: 40)
         progressView.center.x = centerX
-        progressView.frame.origin.y = artworkView.frame.maxY + 4
+        progressView.frame.origin.y = artworkView.frame.maxY + UIProperties.Player.progressViewTopInset
         
         titleLabel.frame.size = CGSize(width: view.frame.width - 40, height: 24)
         titleLabel.center.x = centerX
-        titleLabel.frame.origin.y = progressView.frame.maxY + 4
+        titleLabel.frame.origin.y = progressView.frame.maxY + UIProperties.Player.progressViewBottomInset
         
         artistLabel.frame.size = titleLabel.frame.size
         artistLabel.center.x = centerX
-        artistLabel.frame.origin.y = titleLabel.frame.maxY + 1
+        artistLabel.frame.origin.y = titleLabel.frame.maxY + UIProperties.Player.titleBottomInset
         
         playPauseButton.center.x = view.center.x
-        playPauseButton.frame.origin.y = artistLabel.frame.maxY + 13
+        playPauseButton.frame.origin.y = artistLabel.frame.maxY + UIProperties.Player.artistBottomInset
         
         previousButton.center.y = playPauseButton.center.y
         nextButton.center.y = playPauseButton.center.y
@@ -184,10 +187,10 @@ final class PlayerVC: UIViewController {
         
         volumeView.frame.size = CGSize(width: view.frame.width - 60, height: 28)
         volumeView.center.x = centerX
-        volumeView.frame.origin.y = playPauseButton.frame.maxY + 9
+        volumeView.frame.origin.y = playPauseButton.frame.maxY + UIProperties.Player.playButtonBottomInset
         
         shuffleButton.frame.origin.x = 36
-        shuffleButton.frame.origin.y = volumeView.frame.maxY + 8
+        shuffleButton.frame.origin.y = volumeView.frame.maxY + UIProperties.Player.volumeBottomInset
         
         repeatButton.center.x = centerX
         repeatButton.center.y = shuffleButton.center.y
@@ -306,7 +309,6 @@ final class PlayerVC: UIViewController {
     
     deinit {
         print("PlayerVC deinit")
-        print(view.gestureRecognizers?.count)
     }
 }
 

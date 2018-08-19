@@ -71,16 +71,22 @@ final class BaseVC: UIViewController {
     
     private func layoutViews() {
         let tabBarHeight: CGFloat = 62
-        let playerBarHeight = PlayerBarProperties.barHeight
+        let playerBarHeight = UIProperties.playerBarHeight
         
         tabBar.frame.origin.x = 0
         tabBar.frame.size.width = view.frame.width
         tabBar.frame.size.height = tabBarHeight
-        tabBar.frame.origin.y = view.frame.height - tabBarHeight
         
-        contentView.frame.origin = .zero
+        if currentDevice == .iPhoneX {
+            tabBar.frame.origin.y = view.frame.height - tabBarHeight - 16
+        } else {
+            tabBar.frame.origin.y = view.frame.height - tabBarHeight
+        }
+    
+        contentView.frame.origin.x = 0
         contentView.frame.size.width = view.frame.width
-        contentView.frame.size.height = view.frame.height - tabBarHeight
+        contentView.frame.origin.y = currentDevice == .iPhoneX ? UIProperties.iPhoneXTopInset : 0
+        contentView.frame.size.height = tabBar.frame.minY - contentView.frame.minY
         
         playerBar.frame.origin.x = 0
         playerBar.frame.size = CGSize(width: view.frame.width, height: playerBarHeight)
@@ -101,7 +107,7 @@ final class BaseVC: UIViewController {
     func showPlayerBar() {
         view.bringSubview(toFront: tabBar)
         UIView.animate(0.48, damping: 0.9, velocity: 1) {
-            self.playerBar.frame.origin.y = screenHeight - self.playerBar.frame.height - self.tabBar.frame.height
+            self.playerBar.frame.origin.y = self.tabBar.frame.minY - self.playerBar.frame.height
         }
         NotificationCenter.default.post(name: .PlayerBarAppeared, object: nil)
     }
@@ -158,6 +164,7 @@ extension BaseVC: MiniPlayerBarDelegate {
         let playerVC = PlayerVC()
         self.playerVC = playerVC
         verticalTransitionManager = VerticalTransitionManager(viewController: playerVC)
+        verticalTransitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         playerVC.transitioningDelegate = verticalTransitionManager
         present(playerVC, animated: true)
     }

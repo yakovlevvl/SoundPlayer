@@ -16,7 +16,7 @@ class CompilationVC: UIViewController {
     
     fileprivate let topBar: ClearTopBar = {
         let topBar = ClearTopBar()
-        topBar.setRightButtonFontSize(20)
+        topBar.setRightButtonFont(Fonts.clearTopBarFont)
         topBar.setRightButtonTitle("Edit")
         topBar.setRightButtonTitleColor(Colors.red)
         topBar.setLeftButtonImage(UIImage(named: "BackIcon"))
@@ -27,7 +27,7 @@ class CompilationVC: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.sectionInset.bottom = 16
         layout.minimumLineSpacing = 14
-        layout.itemSize = CGSize(width: screenWidth - 32, height: 70)
+        layout.itemSize = CGSize(width: screenWidth - 32, height: UIProperties.songCellHeight)
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .white
         return collectionView
@@ -78,12 +78,16 @@ class CompilationVC: UIViewController {
         topBar.frame.origin = .zero
         topBar.frame.size = CGSize(width: view.frame.width, height: 76)
         
+        if #available(iOS 11.0, *) {
+            songsView.contentInsetAdjustmentBehavior = .never
+        }
+        
         songsView.frame = view.bounds
         songsView.contentInset.top = topBar.frame.height + 2
         songsView.scrollIndicatorInsets.top = songsView.contentInset.top
         
         let layout = songsView.collectionViewLayout as! UICollectionViewFlowLayout
-        layout.headerReferenceSize = CGSize(width: songsView.frame.width, height: 226)
+        layout.headerReferenceSize = CGSize(width: songsView.frame.width, height: UIProperties.CompilationView.height)
     }
     
     fileprivate func registerSupplementaryViewClass() {}
@@ -151,8 +155,8 @@ extension CompilationVC: UICollectionViewDelegateFlowLayout {
 extension CompilationVC: PlayerBarObservable {
     
     func playerBarAppeared() {
-        songsView.contentInset.bottom = PlayerBarProperties.barHeight
-        songsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+        songsView.contentInset.bottom = UIProperties.playerBarHeight
+        songsView.scrollIndicatorInsets.bottom = UIProperties.playerBarHeight
     }
     
     func playerBarDisappeared() {

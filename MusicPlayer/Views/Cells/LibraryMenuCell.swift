@@ -14,7 +14,7 @@ final class LibraryMenuItemCell: UICollectionViewCell {
         let label = UILabel()
         label.textAlignment = .center
         label.frame.size.height = 28
-        label.font = UIFont(name: Fonts.general, size: 20)
+        label.font = Fonts.libraryMenuCellFont
         return label
     }()
     

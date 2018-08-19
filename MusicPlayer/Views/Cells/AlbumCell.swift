@@ -13,7 +13,7 @@ class PlaylistCell: UICollectionViewCell {
     fileprivate let titleLabel: UILabel = {
         let label = UILabel()
         label.frame.size.height = 22
-        label.font = UIFont(name: Fonts.general, size: 18)
+        label.font = Fonts.playlistCellFont
         return label
     }()
     
@@ -42,7 +42,7 @@ class PlaylistCell: UICollectionViewCell {
         artworkView.frame.size = CGSize(width: frame.width, height: frame.width)
         
         titleLabel.frame.origin.x = 3
-        titleLabel.frame.origin.y = artworkView.frame.maxY + 14
+        titleLabel.frame.origin.y = artworkView.frame.maxY + UIProperties.PlaylistCell.titleTopInset
         titleLabel.frame.size.width = frame.width
     }
     
@@ -68,8 +68,8 @@ class AlbumCell: PlaylistCell {
     
     fileprivate let artistLabel: UILabel = {
         let label = UILabel()
-        label.frame.size.height = 22
-        label.font = UIFont(name: Fonts.general, size: 17)
+        label.frame.size.height = UIProperties.AlbumCell.artistHeight
+        label.font = Fonts.albumCellFont
         label.textColor = UIColor(hex: "9B9B9B")
         return label
     }()
@@ -77,13 +77,13 @@ class AlbumCell: PlaylistCell {
     override func setupViews() {
         super.setupViews()
         contentView.addSubview(artistLabel)
-        titleLabel.font = UIFont(name: Fonts.general, size: 17)
+        titleLabel.font = Fonts.albumCellFont
     }
     
     override func layoutViews() {
         super.layoutViews()
         artistLabel.frame.origin.x = 3
-        titleLabel.frame.origin.y = artworkView.frame.maxY + 10
+        titleLabel.frame.origin.y = artworkView.frame.maxY + UIProperties.AlbumCell.titleTopInset
         artistLabel.frame.origin.y = titleLabel.frame.maxY
         artistLabel.frame.size.width = frame.width
     }
@@ -109,8 +109,8 @@ final class AlbumMiniCell: AlbumCell {
         contentView.layer.cornerRadius = 12
         contentView.clipsToBounds = true
         
-        titleLabel.font = UIFont(name: Fonts.general, size: 19)
-        artistLabel.font = UIFont(name: Fonts.general, size: 18)
+        titleLabel.font = Fonts.albumMiniCellFont
+        artistLabel.font = Fonts.albumMiniCellFont
         
         setupShadow()
     }
@@ -156,7 +156,7 @@ final class PlaylistMiniCell: PlaylistCell {
         contentView.layer.cornerRadius = 12
         contentView.clipsToBounds = true
         
-        titleLabel.font = UIFont(name: Fonts.general, size: 20)
+        titleLabel.font = Fonts.songCellFont
         
         setupShadow()
     }

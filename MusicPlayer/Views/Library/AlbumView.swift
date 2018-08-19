@@ -14,7 +14,7 @@ final class AlbumView: PlaylistView {
         let label = UILabel()
         label.frame.size.height = 26
         label.textColor = Colors.red
-        label.font = UIFont(name: Fonts.general, size: 19)
+        label.font = Fonts.albumViewArtistFont
         return label
     }()
     
@@ -41,20 +41,22 @@ class PlaylistView: UICollectionReusableView {
     
     private let artworkView: ArtworkView = {
         let view = ArtworkView()
-        view.frame.size = CGSize(width: 110, height: 110)
+        let height = UIProperties.CompilationView.artworkHeight
+        view.frame.size = CGSize(width: height, height: height)
         return view
     }()
     
     fileprivate let titleLabel: UILabel = {
         let label = UILabel()
         label.frame.size.height = 26
-        label.font = UIFont(name: Fonts.general, size: 20)
+        label.font = Fonts.compilationViewTitleFont
         return label
     }()
     
     private let moreButton: RoundButton = {
         let button = RoundButton(type: .custom)
-        button.frame.size = CGSize(width: 34, height: 34)
+        let height = UIProperties.CompilationView.moreButtonHeight
+        button.frame.size = CGSize(width: height, height: height)
         button.backgroundColor = Colors.roundButtonColor
         button.setImage(UIImage(named: "MoreIconWhite"))
         button.setShadowColor(Colors.red)
@@ -65,7 +67,8 @@ class PlaylistView: UICollectionReusableView {
     
     private let playButton: RoundButton = {
         let button = RoundButton(type: .custom)
-        button.frame.size = CGSize(width: 54, height: 54)
+        let height = UIProperties.CompilationView.playButtonHeight
+        button.frame.size = CGSize(width: height, height: height)
         button.backgroundColor = Colors.roundButtonColor
         button.setImage(UIImage(named: "PlayMiniIcon"))
         button.imageEdgeInsets.left = 4
@@ -78,7 +81,8 @@ class PlaylistView: UICollectionReusableView {
     
     private let shuffleButton: RoundButton = {
         let button = RoundButton(type: .custom)
-        button.frame.size = CGSize(width: 54, height: 54)
+        let height = UIProperties.CompilationView.playButtonHeight
+        button.frame.size = CGSize(width: height, height: height)
         button.backgroundColor = Colors.roundButtonColor
         button.setImage(UIImage(named: "ShuffleIcon"))
         button.setShadowColor(Colors.red)
@@ -112,14 +116,14 @@ class PlaylistView: UICollectionReusableView {
     }
     
     fileprivate func layoutViews() {
-        artworkView.frame.origin = CGPoint(x: 20, y: 1)
+        artworkView.frame.origin = CGPoint(x: 20, y: UIProperties.CompilationView.artworkTopInset)
         
         titleLabel.frame.origin.y = artworkView.frame.minY + 8
         titleLabel.frame.origin.x = artworkView.frame.maxX + 20
         titleLabel.frame.size.width = frame.width - titleLabel.frame.minX - 20
         
         playButton.center.x = artworkView.center.x
-        playButton.frame.origin.y = artworkView.frame.maxY + 30
+        playButton.frame.origin.y = artworkView.frame.maxY + UIProperties.CompilationView.playButtonTopInset
         
         shuffleButton.frame.origin.x = playButton.frame.maxX + 32
         shuffleButton.center.y = playButton.center.y

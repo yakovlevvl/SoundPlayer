@@ -29,7 +29,7 @@ final class AlbumsVC: UIViewController {
         let button = UIButton(type: .custom)
         button.frame.size = CGSize(width: 60, height: 46)
         button.setTitle("Sort", for: .normal)
-        button.titleLabel!.font = UIFont(name: Fonts.general, size: 20)
+        button.titleLabel!.font = Fonts.sortButtonFont
         button.setTitleColor(UIColor(hex: "D0021B"), for: .normal)
         return button
     }()
@@ -42,7 +42,7 @@ final class AlbumsVC: UIViewController {
         layout.minimumLineSpacing = 17
         layout.minimumInteritemSpacing = 20
         let itemWidth = (screenWidth - 20*3)/2
-        layout.itemSize = CGSize(width: itemWidth, height: itemWidth + 54)
+        layout.itemSize = CGSize(width: itemWidth, height: itemWidth + UIProperties.AlbumCell.descriptionHeight)
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .white
         return collectionView
@@ -109,6 +109,7 @@ final class AlbumsVC: UIViewController {
     @objc private func tapAddButton() {
         let newAlbumVC = NewAlbumVC()
         newAlbumVC.newAlbumDelegate = self
+        transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         newAlbumVC.transitioningDelegate = transitionManager
         present(newAlbumVC, animated: true)
     }
@@ -208,8 +209,8 @@ extension AlbumsVC: UICollectionViewDelegateFlowLayout {
 extension AlbumsVC: PlayerBarObservable {
     
     func playerBarAppeared() {
-        albumsView.contentInset.bottom = PlayerBarProperties.barHeight
-        albumsView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+        albumsView.contentInset.bottom = UIProperties.playerBarHeight
+        albumsView.scrollIndicatorInsets.bottom = UIProperties.playerBarHeight
     }
     
     func playerBarDisappeared() {

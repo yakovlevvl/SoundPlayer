@@ -100,6 +100,10 @@ final class SearchVC: UIViewController {
         searchBar.frame.origin = .zero
         searchBar.frame.size = CGSize(width: view.frame.width, height: 80)
         
+        if #available(iOS 11.0, *) {
+            collectionView.contentInsetAdjustmentBehavior = .never
+        }
+        
         collectionView.frame = view.bounds
         collectionView.contentInset.top = searchBar.frame.height - 10
         collectionView.scrollIndicatorInsets.top = searchBar.frame.height
@@ -293,7 +297,7 @@ extension SearchVC: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         switch titles[indexPath.section] {
-        case .songs : return CGSize(width: view.frame.width - 32, height: 70)
+        case .songs : return CGSize(width: view.frame.width - 32, height: UIProperties.songCellHeight)
         default : return CGSize(width: view.frame.width - 32, height: 104)
         }
     }
@@ -370,8 +374,8 @@ extension SearchVC: SongActions {
 extension SearchVC: PlayerBarObservable {
     
     func playerBarAppeared() {
-        collectionView.contentInset.bottom = PlayerBarProperties.barHeight
-        collectionView.scrollIndicatorInsets.bottom = PlayerBarProperties.barHeight
+        collectionView.contentInset.bottom = UIProperties.playerBarHeight
+        collectionView.scrollIndicatorInsets.bottom = UIProperties.playerBarHeight
     }
     
     func playerBarDisappeared() {

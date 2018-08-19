@@ -14,7 +14,7 @@ final class ClearTopBar: UIView {
         let label = UILabel()
         label.textAlignment = .center
         label.frame.size = CGSize(width: 120, height: 26)
-        label.font = UIFont(name: Fonts.general, size: 20)
+        label.font = Fonts.clearTopBarFont
         return label
     }()
     
@@ -145,8 +145,8 @@ extension ClearTopBar {
         rightButton.setTitleColor(color, for: .normal)
     }
     
-    func setRightButtonFontSize(_ size: CGFloat) {
-        rightButton.titleLabel!.font = UIFont(name: Fonts.general, size: size)
+    func setRightButtonFont(_ font: UIFont) {
+        rightButton.titleLabel!.font = font
     }
 }
 
