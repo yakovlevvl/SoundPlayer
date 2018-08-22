@@ -138,8 +138,7 @@ final class PlayerVC: UIViewController {
         repeatButton.tintColor = player.repeatState ? Colors.red : .black
         shuffleButton.tintColor = player.shuffleState ? Colors.red : .black
         
-        playPauseButton.addTarget(self, action: #selector(touchDownPlayPauseButton), for: .touchDown)
-        playPauseButton.addTarget(self, action: #selector(touchUpPlayPauseButton), for: [.touchUpInside, .touchUpOutside])
+        playPauseButton.addTarget(self, action: #selector(touchUpPlayPauseButton), for: .touchUpInside)
         
         previousButton.addTarget(self, action: #selector(tapPreviousButton), for: .touchUpInside)
         nextButton.addTarget(self, action: #selector(tapNextButton), for: .touchUpInside)
@@ -247,24 +246,20 @@ final class PlayerVC: UIViewController {
     }
     
     private func decreaseArtwork() {
-        UIView.animate(0.28) {
+        UIView.animate(0.7, damping: 1, velocity: 1) {
             self.artworkView.transform = CGAffineTransform(scaleX: 0.86, y: 0.86).concatenating(CGAffineTransform(translationX: 0, y: -10))
         }
     }
     
     private func increaseArtwork() {
-        UIView.animate(0.28) {
+        UIView.animate(0.8, damping: 0.5, velocity: 0.2) {
             self.artworkView.transform = .identity
         }
     }
     
-    @objc private func touchDownPlayPauseButton() {
-        decreasePlayPauseButton()
-    }
-    
     @objc private func touchUpPlayPauseButton() {
+        animatePlayPauseButton()
         player.isPlaying ? player.pause() : player.play()
-        increasePlayPauseButton()
     }
     
     @objc private func tapPreviousButton() {
@@ -305,10 +300,6 @@ final class PlayerVC: UIViewController {
         
         let remainingTime = stringFromTimeInterval(player.currentDuration - progressView.currentTime)
         progressView.setupRemainingTime("-\(remainingTime)")
-    }
-    
-    deinit {
-        print("PlayerVC deinit")
     }
 }
 

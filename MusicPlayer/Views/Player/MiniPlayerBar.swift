@@ -69,8 +69,7 @@ final class MiniPlayerBar: UIView {
         
         nextButton.addTarget(self, action: #selector(tapNextButton), for: .touchUpInside)
         
-        playPauseButton.addTarget(self, action: #selector(touchDownPlayPauseButton), for: .touchDown)
-        playPauseButton.addTarget(self, action: #selector(touchUpPlayPauseButton), for: [.touchUpInside, .touchUpOutside])
+        playPauseButton.addTarget(self, action: #selector(touchUpPlayPauseButton), for: .touchUpInside)
         
         setupTapGesture()
     }
@@ -101,13 +100,9 @@ final class MiniPlayerBar: UIView {
         addGestureRecognizer(tapGesture)
     }
     
-    @objc private func touchDownPlayPauseButton() {
-        decreasePlayPauseButton()
-    }
-    
     @objc private func touchUpPlayPauseButton() {
+        animatePlayPauseButton()
         delegate?.tapPlayPauseButton()
-        increasePlayPauseButton()
     }
     
     @objc private func tapNextButton() {

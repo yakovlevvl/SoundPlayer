@@ -289,7 +289,6 @@ final class BrowserVC: UIViewController {
     
     deinit {
         NotificationCenter.default.removeObserver(self)
-        print("Browser deinit")
     }
     
 }

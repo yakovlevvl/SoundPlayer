@@ -11,10 +11,10 @@ import MessageUI
 final class MailControllerPresenter: NSObject {
     
     func present(from сontroller: UIViewController) {
-        let device = UIDevice.current.model
+        let device = UIDevice.current.modelName
         let systemVersion = UIDevice.current.systemVersion
         let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")!
-        let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as! String
+        let appName = AppInfo.appName
         
         let info = "\n\n---\nPlease don't remove the following technical info:\nApp version - \(appVersion)\nDevice - \(device)\niOS version - \(systemVersion)"
         
@@ -23,7 +23,7 @@ final class MailControllerPresenter: NSObject {
             mailController.mailComposeDelegate = self
             mailController.setSubject(appName)
             mailController.setMessageBody(info, isHTML: false)
-            mailController.setToRecipients(["yakovlev15@icloud.com"])
+            mailController.setToRecipients(["yakovlevvl@icloud.com"])
             сontroller.present(mailController, animated: true)
         } else {
             let alertVC = UIAlertController(title: "Error", message: "Sorry, you need to setup mail first!", preferredStyle: .alert)

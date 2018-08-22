@@ -18,9 +18,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         
-        NotificationService.main.requestAuthorization()
-        
         RealmService.configure()
+        
+        window = UIWindow()
+        window?.rootViewController = BaseVC()
+        window?.makeKeyAndVisible()
+        
+        NotificationService.main.requestAuthorization()
         
         if !UserDefaults.standard.bool(forKey: UserDefaultsKeys.notFirstLaunch) {
             UserDefaults.standard.set(true, forKey: UserDefaultsKeys.notFirstLaunch)
@@ -30,10 +34,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if !SettingsManager.spotlightIsEnabled {
             SpotlightManager.removeAllData()
         }
-        
-        window = UIWindow()
-        window?.rootViewController = BaseVC()
-        window?.makeKeyAndVisible()
         
         RateAppService.incrementAppOpenedCount()
         RateAppService.checkAndAskForReview()

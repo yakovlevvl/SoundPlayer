@@ -64,14 +64,11 @@ final class ArtworkView: UIView {
         if image == nil {
             setDefaultArtwork()
         } else {
-            removeArtwork()
             imageView.image = image
-            imageView.contentMode = .scaleAspectFill
         }
     }
     
     func setDefaultArtwork() {
-        imageView.contentMode = .center
         if frame.width < 70 {
             imageView.image = UIImage(named: "AlbumMiniIcon")
         } else if frame.width > 70, frame.width < 180 {

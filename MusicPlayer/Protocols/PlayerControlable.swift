@@ -31,19 +31,24 @@ extension PlayerControlable {
         playPauseButton.controlState = .pause
     }
     
-    func decreasePlayPauseButton() {
+    func animatePlayPauseButton() {
         playPauseButton.imageView!.contentMode = .center
-        UIView.animate(0.12) {
-            self.playPauseButton.imageView!.transform = CGAffineTransform(scaleX: 0.7, y: 0.7)
-            self.playPauseButton.alpha = 0.3
-        }
-    }
-    
-    func increasePlayPauseButton() {
-        UIView.animate(0.14) {
-            self.playPauseButton.imageView!.transform = .identity
-            self.playPauseButton.alpha = 1
-        }
+        let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
+        scaleAnim.fromValue = 1
+        scaleAnim.toValue = 0.6
+        scaleAnim.duration = 0.10
+        scaleAnim.autoreverses = true
+        scaleAnim.fillMode = kCAFillModeForwards
+        
+        let fadeAnim = CABasicAnimation(keyPath: "opacity")
+        fadeAnim.fromValue = 1
+        fadeAnim.toValue = 0.24
+        fadeAnim.duration = 0.12
+        fadeAnim.autoreverses = true
+        fadeAnim.fillMode = kCAFillModeForwards
+        
+        playPauseButton.imageView!.layer.add(scaleAnim, forKey: nil)
+        playPauseButton.imageView!.layer.add(fadeAnim, forKey: nil)
     }
     
     func animateNextButton() {

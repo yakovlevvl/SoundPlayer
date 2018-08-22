@@ -136,10 +136,9 @@ extension SettingsVC {
     }
     
     private func showActivityController() {
-        let appId = "..."
-        let appUrl = URL(string: "https://itunes.com/app/\(appId)")!
-        let text = "If you ever need to save & play music from your phone, download music app (Name) "
-        let vc = UIActivityViewController(activityItems: [appUrl], applicationActivities: [])
+        let appUrl = URL(string: "https://itunes.apple.com/app/\(AppInfo.appId)")!
+        let text = "If you ever need to save and play music from your phone, download music app \(appUrl)"
+        let vc = UIActivityViewController(activityItems: [text], applicationActivities: [])
         present(vc, animated: true)
     }
 }

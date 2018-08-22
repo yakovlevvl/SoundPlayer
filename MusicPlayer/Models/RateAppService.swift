@@ -39,8 +39,7 @@ final class RateAppService {
     }
     
     class func openAppStore() {
-        let appId = "..."   ////// set app id via itunes connect
-        let appStoreURL = URL(string: "itms-apps://itunes.com/app/id=\(appId)&action=write-review")!
+        let appStoreURL = URL(string: "itms-apps://itunes.apple.com/app/\(AppInfo.appId)?mt=8&action=write-review")!
         UIApplication.shared.open(appStoreURL, options: [:])
     }
 }

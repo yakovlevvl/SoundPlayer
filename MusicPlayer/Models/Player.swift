@@ -185,17 +185,25 @@ final class Player: NSObject {
     
     func play() {
         if let player = audioPlayer, let song = currentSong {
-            player.play()
-            delegate?.playerResumedSong(song)
-            setupRemoteCenterInfo()
+            DispatchQueue.global(qos: .userInteractive).async {
+                player.play()
+                DispatchQueue.main.async {
+                    self.delegate?.playerResumedSong(song)
+                    self.setupRemoteCenterInfo()
+                }
+            }
         }
     }
     
     func pause() {
         if let player = audioPlayer, let song = currentSong {
-            player.pause()
-            delegate?.playerPausedSong(song)
-            setupRemoteCenterInfo()
+            DispatchQueue.global(qos: .userInteractive).async {
+                player.pause()
+                DispatchQueue.main.async {
+                    self.delegate?.playerPausedSong(song)
+                    self.setupRemoteCenterInfo()
+                }
+            }
         }
     }
     

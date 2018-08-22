@@ -81,7 +81,6 @@ class SettingsBaseVC: UIViewController {
     
     deinit {
         removePlayerBarObserver()
-        print("~~~SettingsVC deinit")
     }
 }
 

@@ -62,6 +62,6 @@ extension VerticalTransitionInteractor: UIGestureRecognizerDelegate {
     }
     
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        return !(touch.view! is UISlider)
+        return !(touch.view! is UISlider || touch.view! is UIButton)
     }
 }
