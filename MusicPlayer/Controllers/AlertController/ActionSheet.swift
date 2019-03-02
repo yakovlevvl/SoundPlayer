@@ -104,7 +104,7 @@ class ActionSheet: UIViewController {
         window = UIWindow(frame: UIScreen.main.bounds)
         window!.rootViewController = self
         window!.backgroundColor = .clear
-        window!.windowLevel = UIWindowLevelAlert
+        window!.windowLevel = UIWindow.Level.alert
         window!.isHidden = false
         if cancelActions.count == 1 {
             let cancelAction = cancelActions.first!

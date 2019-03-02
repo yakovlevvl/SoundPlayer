@@ -37,7 +37,7 @@ class Compilation: Object {
             let pathComponent = UUID().uuidString + ".png"
             let artworkUrl = artworksUrl.appendingPathComponent(pathComponent)
             
-            guard let data = UIImagePNGRepresentation(image) else { return }
+            guard let data = image.pngData() else { return }
             
             do {
                 try data.write(to: artworkUrl)

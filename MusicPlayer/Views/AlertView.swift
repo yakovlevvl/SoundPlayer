@@ -28,7 +28,7 @@ final class AlertView: UIView {
             style.lineSpacing = 8
             style.alignment = .center
             let attrString = NSAttributedString(string: newValue, attributes:
-                [NSAttributedStringKey.paragraphStyle : style, NSAttributedStringKey.font : font])
+                [NSAttributedString.Key.paragraphStyle : style, NSAttributedString.Key.font : font])
             alertLabel.attributedText = attrString
         }
     }

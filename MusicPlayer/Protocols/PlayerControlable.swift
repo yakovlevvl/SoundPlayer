@@ -38,14 +38,14 @@ extension PlayerControlable {
         scaleAnim.toValue = 0.6
         scaleAnim.duration = 0.10
         scaleAnim.autoreverses = true
-        scaleAnim.fillMode = kCAFillModeForwards
+        scaleAnim.fillMode = CAMediaTimingFillMode.forwards
         
         let fadeAnim = CABasicAnimation(keyPath: "opacity")
         fadeAnim.fromValue = 1
         fadeAnim.toValue = 0.24
         fadeAnim.duration = 0.12
         fadeAnim.autoreverses = true
-        fadeAnim.fillMode = kCAFillModeForwards
+        fadeAnim.fillMode = CAMediaTimingFillMode.forwards
         
         playPauseButton.imageView!.layer.add(scaleAnim, forKey: nil)
         playPauseButton.imageView!.layer.add(fadeAnim, forKey: nil)

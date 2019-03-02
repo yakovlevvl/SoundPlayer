@@ -85,7 +85,7 @@ final class AlertController: UIViewController {
         let style = NSMutableParagraphStyle()
         style.lineSpacing = 8
         style.alignment = .center
-        let attrString = NSAttributedString(string: message, attributes: [NSAttributedStringKey.paragraphStyle : style, NSAttributedStringKey.font : font])
+        let attrString = NSAttributedString(string: message, attributes: [NSAttributedString.Key.paragraphStyle : style, NSAttributedString.Key.font : font])
         
         let messageSize = attrString.boundingRect(with: CGSize(width: alertWidth - 2*messageHorizontalInset, height: CGFloat.greatestFiniteMagnitude), options: .usesLineFragmentOrigin, context: nil).size
         messageLabel.frame.size = messageSize
@@ -135,10 +135,10 @@ final class AlertController: UIViewController {
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.register(ActionCell.self, forCellWithReuseIdentifier: ActionCell.reuseId)
-        collectionView.register(UICollectionReusableView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: "cell")
+        collectionView.register(UICollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "cell")
         
         if includeTextField {
-            NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame), name: .UIKeyboardWillChangeFrame, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 self.textField!.becomeFirstResponder()
             }
@@ -180,7 +180,7 @@ final class AlertController: UIViewController {
         window = UIWindow(frame: UIScreen.main.bounds)
         window!.rootViewController = self
         window!.backgroundColor = .clear
-        window!.windowLevel = UIWindowLevelAlert
+        window!.windowLevel = UIWindow.Level.alert
         window!.makeKeyAndVisible()
         if cancelActions.count == 1 {
             let cancelAction = cancelActions.first!
@@ -208,7 +208,7 @@ final class AlertController: UIViewController {
     }
     
     @objc private func keyboardWillChangeFrame(notification: Notification) {
-        let frame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
+        let frame = (notification.userInfo![UIResponder.keyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
         if frame.origin.y == view.frame.height { return }
         UIView.animate(0.24) {
             self.view.backgroundColor = UIColor(white: 0, alpha: 0.5)

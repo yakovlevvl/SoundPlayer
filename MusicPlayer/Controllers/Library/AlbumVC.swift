@@ -171,7 +171,7 @@ final class PlaylistVC: CompilationVC {
     var playlist: Playlist!
     
     override func registerSupplementaryViewClass() {
-        songsView.register(PlaylistView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: PlaylistView.reuseId)
+        songsView.register(PlaylistView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: PlaylistView.reuseId)
     }
     
     override func setDefaultTitle() {
@@ -209,7 +209,7 @@ final class PlaylistVC: CompilationVC {
     }
     
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        let playlistView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: PlaylistView.reuseId, for: indexPath) as! PlaylistView
+        let playlistView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: PlaylistView.reuseId, for: indexPath) as! PlaylistView
         playlistView.delegate = self
         playlistView.setupTitle(playlist.title)
         playlist.getArtworkAsync { artwork in
@@ -305,7 +305,7 @@ final class AlbumVC: CompilationVC {
     var album: Album!
 
     override func registerSupplementaryViewClass() {
-        songsView.register(AlbumView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: AlbumView.reuseId)
+        songsView.register(AlbumView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: AlbumView.reuseId)
     }
     
     override func setDefaultTitle() {
@@ -343,7 +343,7 @@ final class AlbumVC: CompilationVC {
     }
     
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        let albumView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: AlbumView.reuseId, for: indexPath) as! AlbumView
+        let albumView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: AlbumView.reuseId, for: indexPath) as! AlbumView
         albumView.delegate = self
         albumView.setupTitle(album.title)
         albumView.setupArtist(album.artist)

@@ -50,7 +50,7 @@ final class FadeChildControllerPresenter {
             UIView.animate(duration, animation: {
                 self.childController.view.alpha = 0
             }, completion: { _ in
-                self.childController.removeFromParent()
+                self.childController.removeFromParentVC()
                 UIView.animate(self.duration, animation: {
                     self.whiteView.alpha = 0
                 }, completion: { _ in

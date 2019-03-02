@@ -80,7 +80,7 @@ extension SearchSettingsVC {
     }
     
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        let view = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionFooter, withReuseIdentifier: SettingDescriptionView.reuseId, for: indexPath) as! SettingDescriptionView
+        let view = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: SettingDescriptionView.reuseId, for: indexPath) as! SettingDescriptionView
         view.setupDescription(settingsGroups[indexPath.section].description!)
         return view
     }

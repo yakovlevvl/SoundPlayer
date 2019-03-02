@@ -56,7 +56,7 @@ extension VerticalTransitionInteractor: UIGestureRecognizerDelegate {
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if let pan = gestureRecognizer as? UIPanGestureRecognizer {
             let velocity = pan.velocity(in: pan.view)
-            return velocity.y > fabs(velocity.x)
+            return velocity.y > abs(velocity.x)
         }
         return true
     }

@@ -97,7 +97,7 @@ final class BrowserVC: UIViewController {
         
         loadLastUrl()
         
-        NotificationCenter.default.addObserver(self, selector: #selector(saveLastUrl), name: .UIApplicationWillTerminate, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(saveLastUrl), name: UIApplication.willTerminateNotification, object: nil)
     }
     
     private func layoutViews() {
@@ -132,11 +132,11 @@ final class BrowserVC: UIViewController {
     }
     
     private func setupKeyboardObserver() {
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame), name: .UIKeyboardWillChangeFrame, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
     }
     
     private func removeKeyboardObserver() {
-        NotificationCenter.default.removeObserver(self, name: .UIKeyboardWillChangeFrame, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
     }
     
     @objc private func saveLastUrl() {
@@ -239,7 +239,7 @@ final class BrowserVC: UIViewController {
         UIView.animate(0.2, animation: {
             self.historyVC?.view.alpha = 0
         }, completion: { _ in
-            self.historyVC?.removeFromParent()
+            self.historyVC?.removeFromParentVC()
             self.historyVC = nil
         })
     }
@@ -254,7 +254,7 @@ final class BrowserVC: UIViewController {
     }
     
     @objc private func keyboardWillChangeFrame(notification: Notification) {
-        let frame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
+        let frame = (notification.userInfo![UIResponder.keyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
         if frame.origin.y >= view.frame.height {
             showAlertView()
             removeHistoryVC()
@@ -515,7 +515,7 @@ extension BrowserVC: WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        guard navigationAction.navigationType == .linkActivated else {
+        guard navigationAction.navigationType == .linkActivated || navigationAction.navigationType == .other else {
             return decisionHandler(.allow)
         }
         guard let url = navigationAction.request.url else {

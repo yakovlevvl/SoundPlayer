@@ -137,7 +137,7 @@ final class AddArtworkVC: UIViewController {
     
     private func allowAccess() {
         print("allowAccess")
-        UIApplication.shared.open(URL(string: UIApplicationOpenSettingsURLString)!, options: [:])
+        UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!, options: [:])
     }
     
     private func showPreview(for image: UIImage) {

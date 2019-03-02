@@ -57,7 +57,7 @@ class SettingsBaseVC: UIViewController {
         collectionView.register(SettingCell.self, forCellWithReuseIdentifier: SettingCell.reuseId)
         collectionView.register(NavigationSettingCell.self, forCellWithReuseIdentifier: NavigationSettingCell.reuseId)
         collectionView.register(SwitchSettingCell.self, forCellWithReuseIdentifier: SwitchSettingCell.reuseId)
-        collectionView.register(SettingDescriptionView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionFooter, withReuseIdentifier: SettingDescriptionView.reuseId)
+        collectionView.register(SettingDescriptionView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: SettingDescriptionView.reuseId)
         
         setupPlayerBarObserver()
     }

@@ -50,19 +50,19 @@ extension FileManager {
 
 extension UIView {
     
-    class func animate(_ duration: Double, delay: Double = 0, damping: CGFloat, velocity: CGFloat, options: UIViewAnimationOptions = [], animation: @escaping () -> (), completion: @escaping (Bool) -> ()) {
+    class func animate(_ duration: Double, delay: Double = 0, damping: CGFloat, velocity: CGFloat, options: UIView.AnimationOptions = [], animation: @escaping () -> (), completion: @escaping (Bool) -> ()) {
         animate(withDuration: duration, delay: delay, usingSpringWithDamping: damping, initialSpringVelocity: velocity, options: options, animations: animation, completion: completion)
     }
     
-    class func animate(_ duration: Double, delay: Double = 0, damping: CGFloat, velocity: CGFloat, options: UIViewAnimationOptions = [], animation: @escaping () -> ()) {
+    class func animate(_ duration: Double, delay: Double = 0, damping: CGFloat, velocity: CGFloat, options: UIView.AnimationOptions = [], animation: @escaping () -> ()) {
         animate(withDuration: duration, delay: delay, usingSpringWithDamping: damping, initialSpringVelocity: velocity, options: options, animations: animation)
     }
     
-    class func animate(_ duration: Double, options: UIViewAnimationOptions = [], animation: @escaping () -> (), completion: @escaping (Bool) -> ()) {
+    class func animate(_ duration: Double, options: UIView.AnimationOptions = [], animation: @escaping () -> (), completion: @escaping (Bool) -> ()) {
         animate(withDuration: duration, delay: 0, options: options, animations: animation, completion: completion)
     }
     
-    class func animate(_ duration: Double, options: UIViewAnimationOptions = [], animation: @escaping () -> ()) {
+    class func animate(_ duration: Double, options: UIView.AnimationOptions = [], animation: @escaping () -> ()) {
         animate(withDuration: duration, delay: 0, options: options, animations: animation)
     }
     
@@ -98,22 +98,22 @@ extension UIView {
 
 extension UIViewController {
     
-    func removeFromParent() {
-        willMove(toParentViewController: nil)
+    func removeFromParentVC() {
+        willMove(toParent: nil)
         view.removeFromSuperview()
-        removeFromParentViewController()
+        removeFromParent()
     }
     
     func addChildController(_ childController: UIViewController) {
-        addChildViewController(childController)
+        addChild(childController)
         view.addSubview(childController.view)
-        childController.didMove(toParentViewController: self)
+        childController.didMove(toParent: self)
     }
     
     func addChildController(_ childController: UIViewController, parentView: UIView) {
-        addChildViewController(childController)
+        addChild(childController)
         parentView.addSubview(childController.view)
-        childController.didMove(toParentViewController: self)
+        childController.didMove(toParent: self)
     }
     
     class func instantiate(_ storyboard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)) -> Self {
@@ -193,23 +193,23 @@ extension Array where Element: Hashable {
 
 extension MutableCollection where Index == Int {
     
-    mutating func shuffle() {
-        
-        if count < 2 { return }
-        
-        for i in stride(from: count - 1, through: 1, by: -1) {
-            let j = Int(arc4random_uniform(UInt32(i + 1)))
-            if i != j {
-                swapAt(i, j)
-            }
-        }
-    }
+//    mutating func shuffle() {
+//
+//        if count < 2 { return }
+//
+//        for i in stride(from: count - 1, through: 1, by: -1) {
+//            let j = Int(arc4random_uniform(UInt32(i + 1)))
+//            if i != j {
+//                swapAt(i, j)
+//            }
+//        }
+//    }
 }
 
 extension String {
     
     func textSizeForMaxWidth(_ width: CGFloat, font: UIFont) -> CGSize {
-        return NSString(string: self).boundingRect(with: CGSize(width: width, height: CGFloat.greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading, .usesDeviceMetrics], attributes: [NSAttributedStringKey.font : font as Any], context: nil).size
+        return NSString(string: self).boundingRect(with: CGSize(width: width, height: CGFloat.greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading, .usesDeviceMetrics], attributes: [NSAttributedString.Key.font : font as Any], context: nil).size
     }
 }
 
@@ -308,7 +308,7 @@ extension UIImage {
     }
     
     func imageData() -> Data? {
-        return UIImageJPEGRepresentation(self, 1)
+        return self.jpegData(compressionQuality: 1)
     }
 }
 

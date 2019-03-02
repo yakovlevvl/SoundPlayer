@@ -12,6 +12,6 @@ enum AppInfo {
     
     static let appId = "id1432917019"
     
-    static let appName = "Music Player"
+    static let appName = "SoundPlayer"
 }
 

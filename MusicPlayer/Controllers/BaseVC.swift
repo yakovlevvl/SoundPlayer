@@ -9,7 +9,7 @@
 import UIKit
 
 final class BaseVC: UIViewController {
-    
+
     private let player = Player.main
     
     private let tabBar = TabBar()
@@ -55,7 +55,7 @@ final class BaseVC: UIViewController {
         view.addSubview(contentView)
         contentView.backgroundColor = .white
         
-        view.bringSubview(toFront: playerBar)
+        view.bringSubviewToFront(playerBar)
         
         layoutViews()
         
@@ -95,7 +95,7 @@ final class BaseVC: UIViewController {
     
     private func showController(_ vc: UIViewController) {
         if vc.parent != nil { return }
-        childViewControllers.first?.removeFromParent()
+        children.first?.removeFromParentVC()
         addChildController(vc, parentView: contentView)
         vc.view.frame = contentView.bounds
     }
@@ -105,7 +105,7 @@ final class BaseVC: UIViewController {
     }
     
     func showPlayerBar() {
-        view.bringSubview(toFront: tabBar)
+        view.bringSubviewToFront(tabBar)
         UIView.animate(0.48, damping: 0.9, velocity: 1) {
             self.playerBar.frame.origin.y = self.tabBar.frame.minY - self.playerBar.frame.height
         }
@@ -113,7 +113,7 @@ final class BaseVC: UIViewController {
     }
     
     func hidePlayerBar() {
-        view.bringSubview(toFront: tabBar)
+        view.bringSubviewToFront(tabBar)
         UIView.animate(0.4) {
             self.playerBar.frame.origin.y = screenHeight
         }

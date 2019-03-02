@@ -123,7 +123,7 @@ final class ArtworkPreviewVC: UIViewController {
         
         maskLayer.frame = view.bounds
         maskLayer.path = maskPath.cgPath
-        maskLayer.fillRule = kCAFillRuleEvenOdd
+        maskLayer.fillRule = CAShapeLayerFillRule.evenOdd
         
         frameLayer.frame = CGRect(origin: frameOrigin, size: frameSize)
     }
@@ -152,7 +152,7 @@ final class ArtworkPreviewVC: UIViewController {
         let y = (scrollView.contentOffset.y + frameLayer.frame.origin.y) * scale
         let cropFrame = CGRect(x: x, y: y, width: width, height: height)
         let croppedImage = UIImage(cgImage: artwork.cgImage!.cropping(to: cropFrame)!)
-        let size = UIProperties.Player.artworkWidth
+        let size = UIProperties.Player.artworkWidth /////
         croppedImage.resizeAsync(to: CGSize(width: size, height: size)) { image in
             completion(image)
         }

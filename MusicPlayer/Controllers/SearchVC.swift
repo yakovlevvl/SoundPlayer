@@ -86,7 +86,7 @@ final class SearchVC: UIViewController {
         collectionView.register(SongCell.self, forCellWithReuseIdentifier: SongCell.reuseId)
         collectionView.register(AlbumMiniCell.self, forCellWithReuseIdentifier: AlbumMiniCell.reuseId)
         collectionView.register(PlaylistMiniCell.self, forCellWithReuseIdentifier: PlaylistMiniCell.reuseId)
-        collectionView.register(SearchTitleHeader.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: SearchTitleHeader.reuseId)
+        collectionView.register(SearchTitleHeader.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: SearchTitleHeader.reuseId)
 
         setupKeyboardObserver()
         setupPlayerBarObserver()
@@ -187,11 +187,11 @@ final class SearchVC: UIViewController {
     }
     
     private func setupKeyboardObserver() {
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame), name: .UIKeyboardWillChangeFrame, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
     }
     
     @objc private func keyboardWillChangeFrame(notification: Notification) {
-        let frame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
+        let frame = (notification.userInfo![UIResponder.keyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
         if frame.origin.y >= view.frame.height {
             player.currentSong != nil ? playerBarAppeared() : playerBarDisappeared()
         } else {
@@ -264,7 +264,7 @@ extension SearchVC: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        let view = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: SearchTitleHeader.reuseId, for: indexPath) as! SearchTitleHeader
+        let view = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: SearchTitleHeader.reuseId, for: indexPath) as! SearchTitleHeader
         view.setupTitle(titles[indexPath.section].rawValue)
         return view
     }

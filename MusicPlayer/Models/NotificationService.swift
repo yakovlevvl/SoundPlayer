@@ -31,7 +31,7 @@ final class NotificationService: NSObject {
             }
             let content = UNMutableNotificationContent()
             content.body = "Song \"\(title)\" has  been downloaded"
-            content.sound = UNNotificationSound.default()
+            content.sound = UNNotificationSound.default
             
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
             

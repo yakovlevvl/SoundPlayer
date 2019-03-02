@@ -97,7 +97,7 @@ final class Player: NSObject {
         super.init()
         setupRemoteCenterCommands()
         setupInterruptionObserver()
-        try? audioSession.setCategory(AVAudioSessionCategoryPlayback)
+        try? audioSession.setCategory(AVAudioSession.Category(rawValue: convertFromAVAudioSessionCategory(AVAudioSession.Category.playback)), mode: .default)
     }
     
     func playSong(with index: Int, in songsList: [Song]) {
@@ -316,7 +316,7 @@ final class Player: NSObject {
     }
     
     private func setupInterruptionObserver() {
-        NotificationCenter.default.addObserver(self, selector: #selector(audioSessionInterrupted), name: .AVAudioSessionInterruption, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(audioSessionInterrupted), name: AVAudioSession.interruptionNotification, object: nil)
     }
     
     @objc private func audioSessionInterrupted() {
@@ -404,4 +404,9 @@ extension Player: AVAudioPlayerDelegate {
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
         stop()
     }
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromAVAudioSessionCategory(_ input: AVAudioSession.Category) -> String {
+	return input.rawValue
 }

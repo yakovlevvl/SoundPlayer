@@ -97,15 +97,15 @@ class NewPlaylistVC: UIViewController {
     }
     
     fileprivate func registerSupplementaryViewClass() {
-        songsView.register(NewPlaylistView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: NewPlaylistView.reuseId)
+        songsView.register(NewPlaylistView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: NewPlaylistView.reuseId)
     }
     
     private func setupKeyboardObserver() {
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame), name: .UIKeyboardWillChangeFrame, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
     }
     
     @objc private func keyboardWillChangeFrame(notification: Notification) {
-        let frame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
+        let frame = (notification.userInfo![UIResponder.keyboardFrameEndUserInfoKey] as AnyObject).cgRectValue!
         if frame.origin.y >= view.frame.height {
             songsView.contentInset.bottom = 0
             songsView.scrollIndicatorInsets.bottom = 0
@@ -247,7 +247,7 @@ extension NewPlaylistVC: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        let playlistView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: NewPlaylistView.reuseId, for: indexPath) as! NewPlaylistView
+        let playlistView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: NewPlaylistView.reuseId, for: indexPath) as! NewPlaylistView
         playlistView.delegate = self
         playlistView.setupTitle(playlistTitle)
         playlistView.setupArtworkImage(artworkImage)
@@ -294,11 +294,11 @@ class NewAlbumVC: NewPlaylistVC {
     }
     
     override func registerSupplementaryViewClass() {
-        songsView.register(NewAlbumView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: NewAlbumView.reuseId)
+        songsView.register(NewAlbumView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: NewAlbumView.reuseId)
     }
     
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        let albumView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: NewAlbumView.reuseId, for: indexPath) as! NewAlbumView
+        let albumView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: NewAlbumView.reuseId, for: indexPath) as! NewAlbumView
         albumView.delegate = self
         albumView.setupTitle(playlistTitle)
         albumView.setupArtist(albumArtist)

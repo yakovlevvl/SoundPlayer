@@ -25,13 +25,13 @@ class ImageView: UIView {
         }
     }
     
-    override var contentMode: UIViewContentMode {
+    override var contentMode: UIView.ContentMode {
         didSet {
             switch contentMode {
             case .center:
-                layer.contentsGravity = kCAGravityCenter
+                layer.contentsGravity = CALayerContentsGravity.center
             default:
-                layer.contentsGravity = kCAGravityResizeAspectFill
+                layer.contentsGravity = CALayerContentsGravity.resizeAspectFill
             }
         }
     }
