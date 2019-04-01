@@ -3,9 +3,9 @@
 </p>
 <br />
 
-<a href="url"><img src="https://github.com/yakovlevvl/SoundPlayer/blob/master/Content/iPhoneX1.png" height="634" width="293" ></a>
-<a href="url"><img src="https://github.com/yakovlevvl/SoundPlayer/blob/master/Content/iPhoneX2.png" height="634" width="293" ></a>
-<a href="url"><img src="https://github.com/yakovlevvl/SoundPlayer/blob/master/Content/iPhoneX3.png" height="634" width="293" ></a>
+<a href="url"><img src="https://github.com/yakovlevvl/SoundPlayer/blob/master/Content/iPhoneX1.png" height="626" width="288" ></a>
+<a href="url"><img src="https://github.com/yakovlevvl/SoundPlayer/blob/master/Content/iPhoneX2.png" height="626" width="288" ></a>
+<a href="url"><img src="https://github.com/yakovlevvl/SoundPlayer/blob/master/Content/iPhoneX3.png" height="626" width="288" ></a>
 <br />
 <br />
 
