@@ -365,6 +365,7 @@ extension BrowserVC: BrowserToolBarDelegate {
         transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 8
         bookmarksVC.transitioningDelegate = transitionManager
         bookmarksVC.bookmarksManager = bookmarksManager
+        bookmarksVC.modalPresentationStyle = .fullScreen
         bookmarksVC.delegate = self
         present(bookmarksVC, animated: true)
     }
@@ -409,6 +410,7 @@ extension BrowserVC: BrowserToolBarDelegate {
         transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 8
         downloadsVC.transitioningDelegate = transitionManager
         downloadsVC.downloadsManager = downloadsManager
+        downloadsVC.modalPresentationStyle = .fullScreen
         downloadDelegate = downloadsVC
         present(downloadsVC, animated: true)
     }

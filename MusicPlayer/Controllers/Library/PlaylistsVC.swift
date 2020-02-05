@@ -109,6 +109,7 @@ final class PlaylistsVC: UIViewController {
     @objc private func tapAddButton() {
         let newPlaylistVC = NewPlaylistVC()
         newPlaylistVC.delegate = self
+        newPlaylistVC.modalPresentationStyle = .fullScreen
         transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         newPlaylistVC.transitioningDelegate = transitionManager
         present(newPlaylistVC, animated: true)

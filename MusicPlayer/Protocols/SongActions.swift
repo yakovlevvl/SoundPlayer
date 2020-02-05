@@ -73,6 +73,7 @@ extension SongActions where Self: UIViewController {
     func selectAlbum(for song: Song) {
         let selectAlbumVC = SelectAlbumVC()
         selectAlbumVC.song = song
+        selectAlbumVC.modalPresentationStyle = .fullScreen
         selectAlbumVC.transitioningDelegate = transitionManager
         present(selectAlbumVC, animated: true)
     }
@@ -80,6 +81,7 @@ extension SongActions where Self: UIViewController {
     func selectPlaylist(for song: Song) {
         let selectPlaylistVC = SelectPlaylistVC()
         selectPlaylistVC.songs = [song]
+        selectPlaylistVC.modalPresentationStyle = .fullScreen
         selectPlaylistVC.transitioningDelegate = transitionManager
         present(selectPlaylistVC, animated: true)
     }
@@ -122,6 +124,7 @@ extension AlbumSongActions where Self: UIViewController {
     func selectPlaylist(for song: Song) {
         let selectPlaylistVC = SelectPlaylistVC()
         selectPlaylistVC.songs = [song]
+        selectPlaylistVC.modalPresentationStyle = .fullScreen
         selectPlaylistVC.transitioningDelegate = transitionManager
         present(selectPlaylistVC, animated: true)
     }

@@ -158,6 +158,7 @@ class NewPlaylistVC: UIViewController {
         let addSongsVC = PlaylistAddSongsVC()
         addSongsVC.delegate = self
         addSongsVC.addedSongs = addedSongs
+        addSongsVC.modalPresentationStyle = .fullScreen
         transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         addSongsVC.transitioningDelegate = transitionManager
         present(addSongsVC, animated: true)
@@ -196,6 +197,7 @@ extension NewPlaylistVC: NewPlaylistViewDelegate {
     private func showAddArtworkVC() {
         let addArtworkVC = AddArtworkVC()
         addArtworkVC.delegate = self
+        addArtworkVC.modalPresentationStyle = .fullScreen
         transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         addArtworkVC.transitioningDelegate = transitionManager
         present(addArtworkVC, animated: true)
@@ -332,6 +334,7 @@ class NewAlbumVC: NewPlaylistVC {
         let addSongsVC = AlbumAddSongsVC()
         addSongsVC.delegate = self
         addSongsVC.addedSongs = addedSongs
+        addSongsVC.modalPresentationStyle = .fullScreen
         transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         addSongsVC.transitioningDelegate = transitionManager
         present(addSongsVC, animated: true)
@@ -395,6 +398,7 @@ final class EditPlaylistVC: NewPlaylistVC {
         addSongsVC.playlist = playlist
         addSongsVC.delegate = self
         addSongsVC.addedSongs = addedSongs
+        addSongsVC.modalPresentationStyle = .fullScreen
         transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         addSongsVC.transitioningDelegate = transitionManager
         present(addSongsVC, animated: true)
@@ -469,6 +473,7 @@ final class EditAlbumVC: NewAlbumVC {
         addSongsVC.album = album
         addSongsVC.delegate = self
         addSongsVC.addedSongs = addedSongs
+        addSongsVC.modalPresentationStyle = .fullScreen
         transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         addSongsVC.transitioningDelegate = transitionManager
         present(addSongsVC, animated: true)

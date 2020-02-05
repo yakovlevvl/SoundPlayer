@@ -144,6 +144,7 @@ final class AddArtworkVC: UIViewController {
         let artworkPreviewVC = ArtworkPreviewVC()
         artworkPreviewVC.delegate = self
         artworkPreviewVC.artwork = image
+        artworkPreviewVC.modalPresentationStyle = .fullScreen
         artworkPreviewVC.transitioningDelegate = transitionManager
         present(artworkPreviewVC, animated: true)
     }

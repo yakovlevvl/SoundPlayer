@@ -466,6 +466,7 @@ extension AlbumVC: AlbumViewDelegate {
     private func selectPlaylist(for songs: [Song]) {
         let selectPlaylistVC = SelectPlaylistVC()
         selectPlaylistVC.songs = songs
+        selectPlaylistVC.modalPresentationStyle = .fullScreen
         selectPlaylistVC.transitioningDelegate = transitionManager
         present(selectPlaylistVC, animated: true)
     }

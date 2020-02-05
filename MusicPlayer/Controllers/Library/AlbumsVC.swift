@@ -109,6 +109,7 @@ final class AlbumsVC: UIViewController {
     @objc private func tapAddButton() {
         let newAlbumVC = NewAlbumVC()
         newAlbumVC.newAlbumDelegate = self
+        newAlbumVC.modalPresentationStyle = .fullScreen
         transitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         newAlbumVC.transitioningDelegate = transitionManager
         present(newAlbumVC, animated: true)

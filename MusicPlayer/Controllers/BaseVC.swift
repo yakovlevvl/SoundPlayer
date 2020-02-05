@@ -65,6 +65,7 @@ final class BaseVC: UIViewController {
         libraryNC.isNavigationBarHidden = true
         libraryNC.delegate = navigationManager
         settingsNC.delegate = navigationManager
+        browserVC.modalPresentationStyle = .fullScreen
         browserVC.transitioningDelegate = transitionManager
         browserVC.delegate = libraryNC.viewControllers.first as! LibraryVC
     }
@@ -163,6 +164,7 @@ extension BaseVC: MiniPlayerBarDelegate {
     func tapPlayerBar() {
         let playerVC = PlayerVC()
         self.playerVC = playerVC
+        playerVC.modalPresentationStyle = .fullScreen
         verticalTransitionManager = VerticalTransitionManager(viewController: playerVC)
         verticalTransitionManager.cornerRadius = currentDevice == .iPhoneX ? 40 : 0
         playerVC.transitioningDelegate = verticalTransitionManager
